@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight, CreditCard, Crown, Gift, Keyboard, LogOut, ShieldCheck, UserCircle } from "lucide-react";
+import { ChevronRight, CreditCard, Crown, Gift, Globe, Keyboard, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { MenuProps } from "antd";
@@ -145,6 +145,18 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
                   },
               ]
             : []),
+        { type: "divider" },
+        {
+            // 工作区里的 logo 指向 /create（工作台首页），不再回营销页；
+            // 想回欢迎页得有明确出口，否则登录后就再也回不去了。
+            key: "site",
+            icon: <Globe className="size-4" />,
+            label: (
+                <Link href="/" prefetch onMouseEnter={() => router.prefetch("/")} onFocus={() => router.prefetch("/")}>
+                    官网首页
+                </Link>
+            ),
+        },
         { type: "divider" },
         {
             key: "logout",

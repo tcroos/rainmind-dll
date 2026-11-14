@@ -59,8 +59,8 @@ export function CreativeAssetMentionPicker({ assets, selectedAssetIds, onSelect 
                             key={asset.id}
                             type="button"
                             data-asset-id={asset.id}
-                            className={`group relative aspect-square min-w-0 overflow-hidden rounded-md border-2 bg-[#eef1f3] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6268d8] dark:bg-[#292f37] ${
-                                selected.has(asset.id) ? "border-[#6268d8] dark:border-[#a8abff]" : "border-transparent hover:border-[#c8ccef] dark:hover:border-[#60658f]"
+                            className={`group relative aspect-square min-w-0 overflow-hidden rounded-md border-2 bg-[#eef1f3] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-1)] dark:bg-[#292f37] ${
+                                selected.has(asset.id) ? "border-[var(--ink-1)] dark:border-[#8b8b95]" : "border-transparent hover:border-[#d3d6dc] dark:hover:border-[#4a4d55]"
                             }`}
                             onMouseDown={(event) => event.preventDefault()}
                             onClick={() => onSelect(asset)}

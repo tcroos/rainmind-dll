@@ -35,7 +35,7 @@ export function AdminAnnouncementsSection({ controller }: { controller: AdminDas
         <Panel>
             <PanelHeader
                 title="公告通知"
-                description="发布站内公告，并设置首页弹窗或登录后弹窗触达。"
+                description="发布站内公告，并可设置登录后弹窗触达；宣传页不会自动弹窗。"
                 actions={
                     <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
                         <Button type="primary" icon={<Plus className="size-4" />} onClick={openAnnouncementModal}>
@@ -66,7 +66,6 @@ export function AdminAnnouncementsSection({ controller }: { controller: AdminDas
                                             <Tag color={announcement.enabled ? "green" : "default"} className="m-0">
                                                 {announcement.enabled ? "展示中" : "已停用"}
                                             </Tag>
-                                            {announcement.popupHome ? <Tag className="m-0">首页弹窗</Tag> : null}
                                             {announcement.popupAfterLogin ? <Tag className="m-0">登录弹窗</Tag> : null}
                                         </div>
                                         <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-stone-600 dark:text-stone-300">{announcement.content}</p>
@@ -77,7 +76,6 @@ export function AdminAnnouncementsSection({ controller }: { controller: AdminDas
                                             查看
                                         </Button>
                                         <Switch checked={announcement.enabled} checkedChildren="展示" unCheckedChildren="停用" onChange={(enabled) => void updateAnnouncementById(announcement, { enabled })} />
-                                        <Switch checked={announcement.popupHome} checkedChildren="首页" unCheckedChildren="首页" onChange={(popupHome) => void updateAnnouncementById(announcement, { popupHome })} />
                                         <Switch checked={announcement.popupAfterLogin} checkedChildren="登录" unCheckedChildren="登录" onChange={(popupAfterLogin) => void updateAnnouncementById(announcement, { popupAfterLogin })} />
                                         <Popconfirm title="删除这条公告？" okText="删除" cancelText="取消" onConfirm={() => void deleteAnnouncementById(announcement.id)}>
                                             <Button danger icon={<Trash2 className="size-4" />}>
@@ -120,7 +118,7 @@ export function AdminAnnouncementsSection({ controller }: { controller: AdminDas
                 ]}
             >
                 <div className="mb-4 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-500 dark:border-stone-800 dark:bg-stone-900/50 dark:text-stone-400">
-                    公告发布后会进入公告记录；勾选首页弹窗或登录后弹窗后，用户会在对应场景看到提醒。
+                    公告发布后会进入公告记录；勾选「登录后弹窗」后，用户登录进入工作台时会看到提醒。宣传页不会自动弹出公告。
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
@@ -157,9 +155,6 @@ export function AdminAnnouncementsSection({ controller }: { controller: AdminDas
                 <div className="mt-4 flex flex-wrap gap-3">
                     <Checkbox checked={announcementDraft.enabled !== false} onChange={(event) => setAnnouncementDraft((current) => ({ ...current, enabled: event.target.checked }))}>
                         启用展示
-                    </Checkbox>
-                    <Checkbox checked={announcementDraft.popupHome === true} onChange={(event) => setAnnouncementDraft((current) => ({ ...current, popupHome: event.target.checked }))}>
-                        首页弹窗
                     </Checkbox>
                     <Checkbox checked={announcementDraft.popupAfterLogin === true} onChange={(event) => setAnnouncementDraft((current) => ({ ...current, popupAfterLogin: event.target.checked }))}>
                         登录后弹窗

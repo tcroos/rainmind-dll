@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("create Agent home layout", () => {
-    it("keeps Agent input, recent work and reusable public inspiration in one flow", async () => {
+    it("keeps Agent input, projects, tasks and reusable public inspiration in one flow", async () => {
         const [page, composer, messages, conversationList, generationControls, preferences, overview, inspiration, previewModal] = await Promise.all([
             readFile(resolve(process.cwd(), "src/app/(user)/create/page.tsx"), "utf8"),
             readFile(resolve(process.cwd(), "src/app/(user)/create/components/creative-composer.tsx"), "utf8"),
@@ -51,9 +51,23 @@ describe("create Agent home layout", () => {
         expect(page.indexOf("<CreateWorkbenchOverview")).toBeLessThan(page.indexOf("<CreateInspirationGallery"));
         expect(page).not.toContain("composerHeight");
         expect(page).not.toContain("top-[117px]");
-        expect(page).toContain('data-testid="creative-composer-dock" data-compact="false" className="mt-5 w-full sm:mt-8"');
+        expect(page).toContain('data-testid="creative-composer-dock"');
+        expect(page).toContain('data-compact={homeDocked ? "true" : "false"}');
+        expect(page).toContain("setHomeDocked");
+        expect(page).toContain("composerMeasureRef");
+        // 收起时机跟着"输入框底边快滚出视口"走，不能再按固定像素阈值
+        expect(page).toContain("homeComposerDocked");
+        expect(page).toContain("composerOriginRef");
+        expect(page).toContain('data-testid="creative-composer-dock-anchor"');
+        expect(page).not.toContain("scrollTop > 120");
+        // 上方输入区必须随内容滚走，不能 sticky 钉住再瞬间搬到底部
+        expect(page).not.toContain("sticky top-0 z-20 mt-5 sm:mt-8");
+        expect(page).toContain('(!showConversation && homeDocked)');
+        expect(page).toContain("<CreateDotField />");
+        expect(page).toContain("<CreateWorkbenchOverview />");
+        expect(page).not.toContain("onUseAsset");
         expect(page).toContain("usePublicImage");
-        expect(composer).toContain('centered ? "max-w-[1080px]"');
+        expect(composer).toContain('centered ? "max-w-[900px]"');
         expect(composer).toContain('data-compact={compact ? "true" : "false"}');
         expect(composer).toContain("const inputMediaAttachments = compact ? allMediaAttachments");
         expect(composer).toContain("<ComposerMediaThumbnail key={asset.id} asset={asset} compact={compact}");
@@ -77,7 +91,14 @@ describe("create Agent home layout", () => {
         expect(composer).toContain("bg-[#66727f]/95");
         expect(composer).toContain("text-white");
         expect(generationControls).toContain("placement={placement}");
-        expect(composer).toContain("hide-scrollbar flex min-w-0 flex-1");
+        expect(composer).toContain("hide-scrollbar scroll-fade-x flex min-w-0 flex-1");
+        expect(composer).toContain('data-testid="creative-composer-reference-row"');
+        expect(composer).toContain("creativeComposerIconButtonClass(false)");
+        expect(composer).toContain("creativeComposerSendButtonClass");
+        expect(composer).toContain('rounded-[20px] p-0');
+        // 输入框不描边，靠面板渐变 + 落影浮在画布上
+        expect(composer).toContain("[background-image:var(--surface-panel-gradient)]");
+        expect(composer).not.toContain("border border-[#e8ebef]");
         expect(generationControls).toContain("智能模型");
         expect(generationControls).toContain("选择模型");
         expect(generationControls).toContain("<Orbit");
@@ -116,20 +137,13 @@ describe("create Agent home layout", () => {
         expect(inspiration).toContain("<LazyMediaImage");
         expect(inspiration).toContain("<PublicWorkCardTitle");
         expect(inspiration).not.toContain("href={`/share/");
-        expect(overview).toContain('aria-label="引用到 Agent"');
-        expect(overview.indexOf('aria-labelledby="create-assets-heading"')).toBeLessThan(overview.indexOf('aria-labelledby="create-projects-heading"'));
-        expect(overview).toContain("recentAssets.slice(0, recentAssetVisibilityClasses.length)");
-        expect(overview).toContain("grid-cols-2");
-        expect(overview).toContain("2xl:grid-cols-6");
-        expect(overview).toContain('"hidden sm:block"');
-        expect(overview).not.toContain("grid-flow-col");
-        expect(overview).not.toContain("overflow-x-auto");
-        expect(overview).not.toContain("lg:grid-cols-5");
+        expect(overview).toContain('aria-labelledby="create-projects-heading"');
+        expect(overview).toContain("项目与任务");
         expect(overview).toContain('"group grid h-32');
         expect(overview).toContain("sm:h-44");
-        expect(overview).toContain('title="引用到 Agent"');
-        expect(overview).not.toMatch(/>\s*引用\s*</);
-        expect(overview).not.toContain("absolute bottom-2 right-2");
+        expect(overview).not.toContain("最近生成");
+        expect(overview).not.toContain('aria-labelledby="create-assets-heading"');
+        expect(overview).not.toContain("recentAssets");
         expect(previewModal).toContain('aria-label="引用提示词到 Agent"');
         expect(previewModal).toContain('aria-label="引用图片到 Agent"');
         expect(previewModal).not.toMatch(/>\s*引用到 Agent\s*</);

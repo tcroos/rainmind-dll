@@ -17,7 +17,7 @@ export function HomeHeader() {
     const [navIndicator, setNavIndicator] = useState({ left: 0, width: 0, visible: false });
     const navItemRefs = useRef<(HTMLAnchorElement | HTMLButtonElement | null)[]>([]);
     const hoveredNavIndex = useRef<number | null>(null);
-    const { authenticated, site, openLogin, openBillingPlans, openProtectedPath } = useHomeActions();
+    const { authenticated, site, openBillingPlans, openProtectedPath } = useHomeActions();
     const theme = useThemeStore((state) => state.theme);
     const setTheme = useThemeStore((state) => state.setTheme);
 
@@ -114,8 +114,10 @@ export function HomeHeader() {
 
                 <div className={styles.headerActions}>
                     <AnimatedThemeToggler theme={theme} onThemeChange={setTheme} className={styles.themeButton} aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"} />
-                    <button type="button" className={styles.primarySmallButton} onClick={() => (authenticated ? openProtectedPath("/create") : openLogin("/create"))}>
-                        {authenticated ? "开始创作" : "立即体验"}
+                    {/* 未登录时这是一个明确的「登录」入口：整页登录而非弹窗，
+                        登录成功回 /create；已登录时同一位置直接开始创作。 */}
+                    <button type="button" className={styles.primarySmallButton} onClick={() => openProtectedPath("/create")}>
+                        {authenticated ? "开始创作" : "登录"}
                     </button>
                     <button type="button" className={styles.mobileMenuButton} onClick={() => setMobileOpen((value) => !value)} aria-expanded={mobileOpen} aria-controls="home-mobile-menu" aria-label={mobileOpen ? "关闭导航菜单" : "打开导航菜单"}>
                         {mobileOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}

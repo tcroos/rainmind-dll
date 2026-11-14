@@ -181,7 +181,7 @@
 
     /* 整页登录/找回密码：中性浅灰底，卡片自己承担层次，不再用紫蓝渐变 */
     .auth-page-bg {
-        background: #fafafa;
+        background: var(--surface-canvas, #ededee);
     }
 
     .dark .auth-page-bg {

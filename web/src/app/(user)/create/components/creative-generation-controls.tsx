@@ -154,7 +154,7 @@ export function CreativeGenerationControls({
                 }
             >
                 <Button type="text" className={creativeComposerToolButtonClass(modelPickerOpen)} icon={<Orbit className="size-4" />} aria-label={`生成模型：${modelSummary}`} aria-haspopup="menu" aria-expanded={modelPickerOpen}>
-                    <span className="max-w-[126px] truncate text-xs font-medium sm:max-w-[172px]">{modelSummary}</span>
+                    <span className="max-w-[126px] truncate text-[13px] font-medium sm:max-w-[172px]">{modelSummary}</span>
                 </Button>
             </Popover>
             <GenerationPreferencesControl

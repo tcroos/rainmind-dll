@@ -17,10 +17,11 @@ export class CanvasProjectServiceError extends Error {
     }
 }
 
-export function listCanvasProjectsForUser(userId: string, input: { page?: unknown; pageSize?: unknown } = {}) {
+export function listCanvasProjectsForUser(userId: string, input: { page?: unknown; pageSize?: unknown; keyword?: unknown } = {}) {
     return listCanvasProjectSummaries(userId, {
         page: positiveInteger(input.page, 1, 1_000_000),
         pageSize: positiveInteger(input.pageSize, 12, 100),
+        keyword: text(input.keyword, 60),
     });
 }
 

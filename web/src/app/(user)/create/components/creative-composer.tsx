@@ -13,7 +13,7 @@ import type { VideoReferenceRole } from "@/lib/video-reference-contract";
 import { cn } from "@/lib/utils";
 
 import { creativeComposerPopoverOverflow, useCreativeComposerPopoverPlacement } from "@/components/creative-composer-popover";
-import { creativeComposerToolButtonClass } from "@/components/creative-composer-styles";
+import { creativeComposerCompactIconButtonClass, creativeComposerIconButtonClass, creativeComposerSendButtonClass, creativeComposerToolButtonClass } from "@/components/creative-composer-styles";
 import { shouldShowVideoFrameControls } from "./creative-composer-video-mode";
 import { creativeAssetMentionAtCursor, creativeAssetMentionCandidates, creativeAssetMentionDeletionAtKey, creativeAssetMentionSegments, replaceCreativeAssetMention, type CreativeAssetMentionSegment } from "./creative-asset-mention";
 import { CreativeAssetMentionPicker } from "./creative-asset-mention-picker";
@@ -68,6 +68,7 @@ export function CreativeComposer({
     onRemoveVideoFrame,
     centered = false,
     compact = false,
+    floating = false,
     onExpand,
 }: {
     inputRef: RefObject<TextAreaRef | null>;
@@ -107,6 +108,7 @@ export function CreativeComposer({
     onRemoveVideoFrame: (role: Extract<VideoReferenceRole, "first_frame" | "last_frame">) => void;
     centered?: boolean;
     compact?: boolean;
+    floating?: boolean;
     onExpand?: () => void;
 }) {
     const [ready, setReady] = useState(false);
@@ -138,6 +140,8 @@ export function CreativeComposer({
     const mediaAttachments = visibleAttachments.filter((asset) => (asset.type === "image" || asset.type === "video") && Boolean(asset.serverUrl || asset.remoteUrl));
     const inputMediaAttachments = compact ? allMediaAttachments.filter((asset) => !frameAssetIds.has(asset.id)) : mediaAttachments;
     const otherAttachments = visibleAttachments.filter((asset) => !mediaAttachments.some((media) => media.id === asset.id));
+    // 展开态：参考素材统一收进盒子顶部的独立一行（对齐 create.moss.cn 的排布），输入区保持整宽。
+    const showReferenceRow = !compact && (Boolean(selectedSkill) || otherAttachments.length > 0 || showVideoFrames || inputMediaAttachments.length > 0);
 
     useEffect(() => setReady(true), []);
 
@@ -210,10 +214,10 @@ export function CreativeComposer({
                     autoSize={compactMode ? { minRows: 1, maxRows: 1 } : { minRows: centered ? 4 : 2, maxRows: 8 }}
                     variant="borderless"
                     className={cn(
-                        "creative-composer-input relative z-[1] min-w-0 !border-0 !bg-transparent !px-1 !py-1 !text-[15px] !leading-7 !shadow-none !outline-none sm:!px-2",
+                        "creative-composer-input relative z-[1] min-w-0 !border-0 !bg-transparent !px-1 !py-1 !text-[15px] !leading-7 !text-[#20242a] !shadow-none !outline-none placeholder:!text-[rgba(32,36,42,0.34)] sm:!px-2 dark:!text-[#f3f5f7] dark:placeholder:!text-[rgba(237,241,245,0.40)]",
                         hasMentionReferences && "!text-transparent caret-[#20242a] dark:caret-[#f3f5f7]",
                     )}
-                    placeholder={compactMode ? "输入你的创作想法" : "输入你的创作想法、脚本或画面要求"}
+                    placeholder={compactMode ? "输入创作想法" : "输入你的创作想法、脚本或画面要求"}
                     onFocus={() => {
                         if (compactMode) onExpand?.();
                     }}
@@ -270,27 +274,37 @@ export function CreativeComposer({
     );
 
     return (
-        <div className={cn("pointer-events-auto mx-auto w-full overflow-hidden", compact ? "max-w-[1036px] px-3 pb-3 sm:px-6 sm:pb-4" : centered ? "max-w-[1080px]" : "mb-3 max-w-[1120px] px-3 sm:mb-5 sm:px-6")}>
+        <div
+            className={cn(
+                "pointer-events-auto mx-auto w-full",
+                floating ? "overflow-visible" : "overflow-hidden",
+                compact ? "max-w-[1036px] px-3 pb-3 sm:px-6 sm:pb-4" : centered ? "max-w-[900px]" : "mb-3 max-w-[1120px] px-3 sm:mb-5 sm:px-6",
+            )}
+        >
             <div
                 data-ready={ready}
                 data-compact={compact ? "true" : "false"}
+                data-floating={floating ? "true" : "false"}
                 className={cn(
-                    "creative-composer border border-[#e2e6ea] bg-white shadow-[0_10px_32px_rgba(32,36,42,0.06)] transition-[border-radius,padding,box-shadow] duration-200 dark:border-[#30363e] dark:bg-[#181b20] dark:shadow-black/24",
-                    compact ? "h-[60px] min-h-[60px] max-h-[60px] rounded-[20px] p-2" : centered ? "rounded-[22px] p-3 sm:p-4" : "rounded-2xl p-2.5",
+                    "creative-composer [background-image:var(--surface-panel-gradient)] transition-[border-radius,padding,box-shadow] duration-200",
+                    floating
+                        ? "shadow-[0_1px_2px_rgba(17,17,19,0.05),0_12px_28px_-12px_rgba(17,17,19,0.20),0_28px_48px_-26px_rgba(17,17,19,0.16)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_2px_6px_rgba(0,0,0,0.5),0_16px_32px_-12px_rgba(0,0,0,0.62)]"
+                        : "shadow-[0_1px_2px_rgba(17,17,19,0.04),0_18px_40px_-30px_rgba(17,17,19,0.20)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_40px_-30px_rgba(0,0,0,0.65)]",
+                    compact ? "h-[60px] min-h-[60px] max-h-[60px] rounded-[20px] p-2" : "rounded-[20px] p-0",
                 )}
                 onClick={compact ? onExpand : undefined}
             >
-                {selectedSkill || otherAttachments.length ? (
-                    <div className={cn("gap-2 overflow-hidden px-2 pb-1 pt-1", compact ? "hidden" : "flex")}>
+                {showReferenceRow ? (
+                    <div data-testid="creative-composer-reference-row" className="flex flex-wrap items-center gap-2 px-3 pb-0.5 pt-3 sm:gap-2.5 sm:px-4">
                         {selectedSkill ? (
-                            <span className="flex h-9 max-w-60 shrink-0 items-center gap-2 rounded-lg border border-[#d6dee8] bg-[#f1f4f8] px-2.5 text-xs font-medium text-[#344152] shadow-[0_2px_8px_rgba(38,49,65,0.07)] dark:border-[#3b4653] dark:bg-[#252b33] dark:text-[#edf1f5] dark:shadow-black/20">
-                                <span className="grid size-5 shrink-0 place-items-center rounded-md bg-[#d3a44f]/16 text-[#95681d] dark:bg-[#e4bb70]/14 dark:text-[#e4bb70]">
+                            <span className="flex h-8 max-w-60 shrink-0 items-center gap-1.5 rounded-lg bg-[var(--surface-soft)] pl-1 pr-1 text-[13px] font-medium text-[var(--ink-1)]">
+                                <span className="grid size-5 shrink-0 place-items-center rounded-md bg-[var(--surface-inset)] text-[var(--ink-2)] dark:bg-[var(--surface-inset)] dark:text-[var(--ink-2)]">
                                     <Sparkles className="size-3.5" />
                                 </span>
                                 <span className="truncate">Skill · {selectedSkill.name}</span>
                                 <button
                                     type="button"
-                                    className="grid size-5 shrink-0 place-items-center rounded-md text-[#7c8795] transition hover:bg-[#dfe5ec] hover:text-[#263141] dark:text-[#aab3bf] dark:hover:bg-[#343c46] dark:hover:text-white"
+                                    className="grid size-5 shrink-0 place-items-center rounded-md text-[#7c8795] transition hover:bg-[rgba(34,39,38,0.06)] hover:text-[#263141] dark:text-[#aab3bf] dark:hover:bg-[rgba(255,255,255,0.08)] dark:hover:text-white"
                                     onClick={onRemoveSkill}
                                     aria-label={`移除 Skill ${selectedSkill.name}`}
                                     title="移除 Skill"
@@ -302,12 +316,15 @@ export function CreativeComposer({
                         {otherAttachments.map((asset) => {
                             const Icon = asset.type === "image" ? ImageIcon : asset.type === "video" ? FileVideo : FileAudio;
                             return (
-                                <span key={asset.id} className="flex h-9 max-w-52 shrink-0 items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-2 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200">
+                                <span
+                                    key={asset.id}
+                                    className="flex h-8 max-w-52 shrink-0 items-center gap-1.5 rounded-lg border border-[rgba(34,39,38,0.09)] bg-transparent pl-1.5 pr-1 text-[13px] text-[#3c4340] dark:border-[rgba(255,255,255,0.13)] dark:text-[#c8d0d8]"
+                                >
                                     <Icon className="size-3.5 shrink-0" />
                                     <span className="truncate">{asset.title}</span>
                                     <button
                                         type="button"
-                                        className="grid size-5 shrink-0 place-items-center rounded text-stone-400 hover:bg-stone-200 hover:text-stone-800 dark:hover:bg-stone-700 dark:hover:text-white"
+                                        className="grid size-5 shrink-0 place-items-center rounded text-[#8b949f] transition hover:bg-[rgba(34,39,38,0.06)] hover:text-[#20242a] dark:hover:bg-[rgba(255,255,255,0.08)] dark:hover:text-white"
                                         onClick={() => onRemoveAttachment(asset.id)}
                                         aria-label={`移除${asset.title}`}
                                     >
@@ -316,10 +333,6 @@ export function CreativeComposer({
                                 </span>
                             );
                         })}
-                    </div>
-                ) : null}
-                <div data-testid="creative-composer-input-row" className={cn("flex min-w-0 items-center gap-2 sm:gap-3", compact ? "h-11 min-h-11 max-h-11" : centered ? "min-h-[112px] items-start" : "min-h-[64px] items-start")}>
-                    <div className={cn("hide-scrollbar flex shrink-0 gap-1.5 overflow-x-auto", compact ? "max-w-[42%] items-center overflow-y-hidden pl-1" : "max-w-[46%] items-start px-1 pb-1 pt-1 sm:max-w-[320px]")}>
                         {showVideoFrames ? (
                             <CreativeVideoFrameControls
                                 mode={frameMode}
@@ -333,40 +346,60 @@ export function CreativeComposer({
                                 onRemove={onRemoveVideoFrame}
                             />
                         ) : (
-                            <>
-                                {inputMediaAttachments.map((asset) => {
-                                    return <ComposerMediaThumbnail key={asset.id} asset={asset} compact={compact} onRemove={onRemoveAttachment} />;
-                                })}
-                                <Tooltip title={mediaAttachments.length ? "继续添加参考素材" : "添加素材"}>
-                                    <Button
-                                        type="text"
-                                        className={cn(
-                                            "mt-0.5 shrink-0 !border !border-[#e5e9ed] !bg-[#f5f7f8] !text-[#87919d] hover:!border-[#d4dae0] hover:!bg-[#eef1f3] hover:!text-[#38424e] dark:!border-[#343a42] dark:!bg-[#24282e] dark:!text-[#9ca6b2] dark:hover:!border-[#49515b] dark:hover:!bg-[#2c3239] dark:hover:!text-white",
-                                            compact
-                                                ? "!size-11 !min-w-11 !rounded-xl"
-                                                : mediaAttachments.length
-                                                  ? "!size-10 !min-w-10 !rounded-lg sm:!size-12 sm:!min-w-12"
-                                                  : centered
-                                                    ? "!size-12 !min-w-12 !rounded-xl sm:!size-14 sm:!min-w-14"
-                                                    : "!size-11 !min-w-11 !rounded-xl",
-                                        )}
-                                        icon={<Plus className="size-5" />}
-                                        onClick={onAttachment}
-                                        loading={uploading}
-                                        aria-label={mediaAttachments.length ? "继续添加参考素材" : "添加素材"}
-                                    />
-                                </Tooltip>
-                            </>
+                            inputMediaAttachments.map((asset) => {
+                                return <ComposerMediaThumbnail key={asset.id} asset={asset} compact={compact} onRemove={onRemoveAttachment} />;
+                            })
                         )}
                     </div>
+                ) : null}
+                <div
+                    data-testid="creative-composer-input-row"
+                    className={cn(
+                        "flex min-w-0 items-center gap-2 sm:gap-3",
+                        compact ? "h-11 min-h-11 max-h-11" : centered ? "min-h-[104px] items-start px-2 pt-3" : "min-h-[72px] items-start px-2 pt-3",
+                    )}
+                >
+                    {compact ? (
+                        <div className="hide-scrollbar flex max-w-[42%] shrink-0 items-center gap-1.5 overflow-x-auto overflow-y-hidden pl-1">
+                            {showVideoFrames ? (
+                                <CreativeVideoFrameControls
+                                    mode={frameMode}
+                                    images={attachments.filter((asset) => asset.type === "image")}
+                                    firstFrameAssetId={videoPreference?.firstFrameAssetId}
+                                    lastFrameAssetId={videoPreference?.lastFrameAssetId}
+                                    uploading={uploading}
+                                    placement={popoverPlacement}
+                                    onSelect={onSelectVideoFrame}
+                                    onUpload={onUploadVideoFrame}
+                                    onRemove={onRemoveVideoFrame}
+                                />
+                            ) : (
+                                <>
+                                    {inputMediaAttachments.map((asset) => {
+                                        return <ComposerMediaThumbnail key={asset.id} asset={asset} compact={compact} onRemove={onRemoveAttachment} />;
+                                    })}
+                                    <Tooltip title={mediaAttachments.length ? "继续添加参考素材" : "添加素材"}>
+                                        <Button
+                                            type="text"
+                                            className={creativeComposerCompactIconButtonClass(false)}
+                                            icon={<Plus className="size-[18px]" />}
+                                            onClick={onAttachment}
+                                            loading={uploading}
+                                            aria-label={mediaAttachments.length ? "继续添加参考素材" : "添加素材"}
+                                        />
+                                    </Tooltip>
+                                </>
+                            )}
+                        </div>
+                    ) : null}
                     {composerInput(compact)}
                     {compact ? (
-                        <div className="flex shrink-0 items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-1">
                             <Tooltip title="引用当前对话资产">
                                 <Button
                                     type="text"
-                                    className="!size-11 !min-w-11 !rounded-xl !text-[#66717e] hover:!bg-[#f2f4f6] hover:!text-[#20242a] dark:!text-[#a3acb7] dark:hover:!bg-[#292f37] dark:hover:!text-white"
-                                    icon={<AtSign className="size-4" />}
+                                    className={creativeComposerCompactIconButtonClass(mentionQuery !== null)}
+                                    icon={<AtSign className="size-[18px]" />}
                                     onMouseDown={(event) => event.preventDefault()}
                                     onClick={(event) => {
                                         event.stopPropagation();
@@ -378,8 +411,8 @@ export function CreativeComposer({
                             <Tooltip title="优化提示词">
                                 <Button
                                     type="text"
-                                    className="!size-11 !min-w-11 !rounded-xl !text-[#66717e] hover:!bg-[#f2f4f6] hover:!text-[#20242a] disabled:!bg-transparent disabled:!text-[#b3bac4] dark:!text-[#a3acb7] dark:hover:!bg-[#292f37] dark:hover:!text-white"
-                                    icon={<WandSparkles className="size-4" />}
+                                    className={creativeComposerCompactIconButtonClass(false)}
+                                    icon={<WandSparkles className="size-[18px]" />}
                                     loading={optimizing}
                                     disabled={busy || !value.trim()}
                                     onClick={(event) => {
@@ -393,7 +426,7 @@ export function CreativeComposer({
                                 <Button
                                     type="primary"
                                     shape="circle"
-                                    className="!size-11 !min-w-11 !border-0 !bg-[linear-gradient(135deg,#5968ff,#604dff)] !text-white !shadow-[0_6px_16px_rgba(89,104,255,0.22)] hover:!bg-[linear-gradient(135deg,#5261f3,#5846ee)] disabled:!bg-none disabled:!bg-[#e2e5e8] disabled:!text-[#aeb5bd] disabled:!shadow-none dark:disabled:!bg-[#30353c] dark:disabled:!text-[#68717d]"
+                                    className={cn(creativeComposerSendButtonClass, "!size-11 !min-w-11 !border-0 disabled:!bg-none disabled:!bg-[#e2e5e8] disabled:!text-[#aeb5bd] disabled:!shadow-none sm:!size-11 sm:!min-w-11 dark:disabled:!bg-[#30353c] dark:disabled:!text-[#68717d]")}
                                     icon={busy ? <Square className="size-3.5 fill-current" /> : <ArrowUp className="size-4" />}
                                     disabled={!busy && !value.trim()}
                                     onClick={busy ? onCancel : onSubmit}
@@ -403,8 +436,18 @@ export function CreativeComposer({
                         </div>
                     ) : null}
                 </div>
-                <div className={cn("min-w-0 items-center gap-2 overflow-hidden px-0.5 pb-0.5 pt-2", compact ? "hidden" : "flex")}>
-                    <div className="hide-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto sm:gap-2">
+                <div className={cn("min-w-0 items-center gap-2", compact ? "hidden" : "flex px-3 pb-3 pt-1 sm:px-4")}>
+                    <Tooltip title={mediaAttachments.length ? "继续添加参考素材" : "添加素材"}>
+                        <Button
+                            type="text"
+                            className={creativeComposerIconButtonClass(false)}
+                            icon={<Plus className="size-4" />}
+                            onClick={onAttachment}
+                            loading={uploading}
+                            aria-label={mediaAttachments.length ? "继续添加参考素材" : "添加素材"}
+                        />
+                    </Tooltip>
+                    <div className="hide-scrollbar scroll-fade-x flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
                         <Popover
                             trigger="click"
                             placement={composerPopoverPlacement}
@@ -459,7 +502,7 @@ export function CreativeComposer({
                                 aria-haspopup="menu"
                                 aria-expanded={modePickerOpen}
                             >
-                                <span className="hidden text-xs font-medium sm:inline">{currentMode.label}</span>
+                                <span className="hidden text-[13px] font-medium sm:inline">{currentMode.label}</span>
                                 <ChevronDown className="hidden size-3.5 sm:block" />
                             </Button>
                         </Popover>
@@ -485,7 +528,7 @@ export function CreativeComposer({
                                 onClick={openAssetMention}
                                 aria-label="引用当前对话资产"
                             >
-                                <span className="hidden text-xs font-medium sm:inline">引用</span>
+                                <span className="hidden text-[13px] font-medium sm:inline">引用</span>
                             </Button>
                         </Tooltip>
                         <Popover
@@ -583,7 +626,7 @@ export function CreativeComposer({
                             }
                         >
                             <Button type="text" className={creativeComposerToolButtonClass(skillPickerOpen)} icon={<Boxes className="size-4" />} aria-label="选择创作 Skill" aria-haspopup="menu" aria-expanded={skillPickerOpen}>
-                                <span className="hidden text-xs font-medium sm:inline">使用 Skill</span>
+                                <span className="hidden text-[13px] font-medium sm:inline">使用 Skill</span>
                             </Button>
                         </Popover>
                         <Tooltip title="优化提示词">
@@ -596,7 +639,7 @@ export function CreativeComposer({
                                 onClick={onOptimize}
                                 aria-label={optimizing ? "正在优化提示词" : "优化提示词"}
                             >
-                                <span className="hidden text-xs font-medium sm:inline">优化</span>
+                                <span className="hidden text-[13px] font-medium sm:inline">优化</span>
                             </Button>
                         </Tooltip>
                     </div>
@@ -604,7 +647,7 @@ export function CreativeComposer({
                         <Button
                             type="primary"
                             shape="circle"
-                            className="shrink-0 !size-11 !min-w-11 !border-0 !bg-[#20242a] !text-white shadow-none hover:!bg-[#343b44] disabled:!bg-[#e2e5e8] disabled:!text-[#aeb5bd] dark:!bg-[#f1f3f5] dark:!text-[#20242a] dark:hover:!bg-white dark:disabled:!bg-[#30353c] dark:disabled:!text-[#68717d]"
+                            className={creativeComposerSendButtonClass}
                             icon={busy ? <Square className="size-3.5 fill-current" /> : <ArrowUp className="size-4" />}
                             disabled={!busy && !value.trim()}
                             onClick={busy ? onCancel : onSubmit}
@@ -653,11 +696,11 @@ function ComposerMediaThumbnail({ asset, compact = false, onRemove }: { asset: C
     const previewUrl = asset.serverUrl || asset.remoteUrl || "";
     return (
         <div
-            className={cn("relative shrink-0 border border-[#dfe4e8] bg-[#f4f6f8] shadow-[0_2px_8px_rgba(38,49,65,0.08)] dark:border-[#3b434d] dark:bg-[#242930] dark:shadow-black/20", compact ? "size-11 rounded-lg" : "size-12 rounded-lg")}
+            className={cn("relative shrink-0 border border-[rgba(34,39,38,0.10)] bg-[#f4f6f8] dark:border-[rgba(255,255,255,0.12)] dark:bg-[#242930]", compact ? "size-11 rounded-[10px]" : "size-14 rounded-[10px]")}
             aria-label={`已上传${asset.type === "image" ? "图片" : "视频"} ${asset.title}`}
             title={asset.title}
         >
-            <div className="size-full overflow-hidden rounded-[7px]">
+            <div className="size-full overflow-hidden rounded-[9px]">
                 {asset.type === "image" ? (
                     <img src={imagePreviewUrl(previewUrl, 320)} alt={asset.title} className="size-full object-cover" />
                 ) : (

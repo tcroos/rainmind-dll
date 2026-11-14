@@ -1,0 +1,38 @@
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const read = (path: string) => readFile(resolve(process.cwd(), path), "utf8");
+
+describe("marketing page never auto-opens an announcement drawer", () => {
+    it("does not even mount the popup component on the landing page", async () => {
+        const init = await read("src/components/layout/client-root-init.tsx");
+
+        expect(init).toContain('const marketingPage = pathname === "/"');
+        expect(init).toContain("installRoute || marketingPage ? null : <SiteAnnouncementPopup />");
+    });
+
+    it("only shows the after-login announcement, never a home popup", async () => {
+        const popup = await read("src/components/layout/site-announcement-popup.tsx");
+
+        // 未登录（宣传页访客）连公告数据都不拉，更不会弹抽屉
+        expect(popup).toContain("useAnnouncements({ enabled: Boolean(user) })");
+        // 组件内部再挡一道，防止以后被复用到公开页
+        expect(popup).toContain('pathname === "/"');
+        expect(popup).toContain("announcement.popupAfterLogin");
+        expect(popup).toContain('isPopupDismissed(announcement.id, "login")');
+        expect(popup).not.toContain("popupHome");
+        expect(popup).not.toContain('key: "home"');
+        expect(popup).not.toContain("首页弹窗");
+    });
+
+    it("removes the now-dead 首页弹窗 switch from the admin console", async () => {
+        const admin = await read("src/components/admin/admin-content-sections.tsx");
+
+        expect(admin).not.toContain("首页弹窗");
+        expect(admin).not.toContain('checkedChildren="首页"');
+        expect(admin).not.toContain("announcement.popupHome");
+        expect(admin).toContain("宣传页不会自动弹出公告");
+        expect(admin).toContain("popupAfterLogin");
+    });
+});

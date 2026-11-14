@@ -74,31 +74,101 @@
     }
 
 
-    /* /login、/register、/install 的整页登录：与首屏弹窗同一套中性白卡语言 */
+    /* /login、/register、/forgot-password 的整页登录：满屏左右分栏。
+     * 不再是浮在灰底上的一张居中圆角卡，而是占满整个视口的两栏：
+     * 左栏视频/视觉铺满，右栏纯色底 + 登录组件居中。
+     * 好处是视频不再被 420px 的小窗框住，大屏下也不会有大片空灰底。 */
     .auth-page-shell {
-        align-items: center;
+        align-items: stretch;
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        max-width: 440px;
+        min-height: 100dvh;
         width: 100%;
     }
 
     .auth-page-card {
         background: #ffffff;
-        border: 1px solid rgba(17, 17, 17, 0.07);
-        border-radius: 16px;
-        box-shadow:
-            0 24px 64px rgba(17, 17, 17, 0.1),
-            0 1px 3px rgba(17, 17, 17, 0.04);
-        padding: 36px 32px 30px;
+        display: grid;
+        flex: 1 1 auto;
+        grid-template-columns: minmax(0, 55%) minmax(0, 45%);
+        min-height: 100dvh;
+        overflow: hidden;
+        padding: 0;
         width: 100%;
     }
 
     .dark .auth-page-card {
-        background: #171717;
-        border-color: rgba(255, 255, 255, 0.07);
-        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+        background: #141416;
+    }
+
+    /* 视频铺满左栏：object-fit cover 由栏位决定裁切，视频永不变形。
+       底下的渐变既是加载中的占位，也是视频挂掉时的兜底，所以按主题给中性色，
+       免得浅色页面上出现一块突兀的黑板。 */
+    .auth-split-media {
+        background: linear-gradient(165deg, #ececee 0%, #dcdcdf 55%, #cfcfd3 100%);
+        min-height: 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .dark .auth-split-media {
+        background: radial-gradient(circle at 50% 0%, #2a2a2e, #101012 70%);
+    }
+
+    .auth-split-video {
+        display: block;
+        height: 100%;
+        inset: 0;
+        object-fit: cover;
+        object-position: center;
+        opacity: 0;
+        position: absolute;
+        transition: opacity 420ms ease;
+        width: 100%;
+    }
+
+    .auth-split-video[data-state="ready"] {
+        opacity: 1;
+    }
+
+    /* 右栏：登录组件在栏内水平垂直居中。
+       内边距用 clamp 随视口伸缩，高度上留足呼吸，避免表单贴着上下边。
+       居中用子元素 margin:auto 而不是 justify-content:center：
+       后者在内容超过容器时会把上半截裁掉（flex 居中溢出的老问题）。
+       内容特别高时（注册页字段多）交给外层 .app-scroll-page 滚动。 */
+    .auth-page-card-content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: clamp(32px, 6vh, 72px) clamp(24px, 5vw, 64px);
+        position: relative;
+    }
+
+    /* 登录组件本体：宽度收到 400px 以内、随窄屏收缩，
+       表单行长度可控、视线不用横扫；高度交给内容，居中交给 margin:auto。 */
+    .auth-page-card-inner {
+        margin: auto;
+        max-width: 400px;
+        width: 100%;
+    }
+
+    /* 窄屏放弃分栏：视频不出现，登录组件占满一行居中 */
+    @media (max-width: 1023px) {
+        .auth-split-media {
+            display: none;
+        }
+
+        .auth-page-card {
+            grid-template-columns: minmax(0, 1fr);
+            min-height: 100dvh;
+        }
+    }
+
+    @media (max-width: 640px) {
+        /* 手机上内边距收紧，登录组件仍限宽、不会撑满整行 */
+        .auth-page-card-content {
+            padding: 28px 18px 32px;
+        }
     }
 
     .auth-page-logo-link {
@@ -206,6 +276,7 @@
         color: #f5f5f5;
     }
 
+    /* 「返回首页」钉在右栏右上角：满屏设计里它不再是卡片下方的一行小字 */
     .auth-page-back {
         align-items: center;
         color: rgba(17, 17, 17, 0.46);
@@ -213,7 +284,11 @@
         font-size: 13px;
         gap: 6px;
         padding: 4px 6px;
+        position: absolute;
+        right: clamp(14px, 2.4vw, 28px);
+        top: clamp(12px, 2.2vh, 24px);
         transition: color 160ms ease;
+        z-index: 2;
     }
 
     .auth-page-back:hover {
@@ -605,7 +680,37 @@
 /* ── 整页登录 / 注册 / 找回密码：antd 组件层 ─────────────────────────────
  * 同样必须放在 @layer 之外：antd 6 的组件样式是运行时注入的无层规则，
  * 层级内的声明压不住它（按钮高度、焦点色、边框都会被 antd 默认值盖掉）。
+ * 链接色也是同一类：antd 给容器里所有 <a> 注入 color:var(--ant-color-link)，
+ * 层级里的 text-stone-950 / dark:text-white 全部输它 —— 深色态下
+ * 「立即注册 / 忘记密码 / 服务条款 / 返回首页」就会变成背景色上的一块黑。
  */
+.auth-page-card .auth-page-back {
+    color: rgba(17, 17, 17, 0.46);
+}
+
+.dark .auth-page-card .auth-page-back {
+    color: rgba(255, 255, 255, 0.44);
+}
+
+.auth-page-card .auth-page-back:hover {
+    color: #111111;
+}
+
+.dark .auth-page-card .auth-page-back:hover {
+    color: #f5f5f5;
+}
+
+.auth-page-card .auth-switch-link a,
+.auth-page-card .ant-checkbox-wrapper a {
+    color: #111111;
+    font-weight: 500;
+}
+
+.dark .auth-page-card .auth-switch-link a,
+.dark .auth-page-card .ant-checkbox-wrapper a {
+    color: #f5f5f5;
+}
+
 .auth-page-card .auth-submit-button.ant-btn {
     height: 46px;
     margin-top: 20px;
@@ -686,4 +791,43 @@
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.22);
     color: #ffffff;
+}
+
+
+/* ── 浏览器自动填充的蓝条 ───────────────────────────────────────────────
+ * Chrome / Edge 给 :-webkit-autofill 的 input 注入一层浅蓝(#e8f0fe)背景，
+ * 那是 UA 样式、优先级高于普通声明，antd 的透明输入框挡不住它；
+ * 而蓝底只刷在 input 本身、刷不到外层 .ant-input-affix-wrapper，
+ * 于是一整行里只有中间一截变蓝，看起来就是「一条蓝条」。
+ * 用一层 inset box-shadow 把 input 重新刷成面板底色，再强制文字/光标色；
+ * 放在 @layer 之外，避免被层级顺序或 antd 的运行时无层规则压掉。
+ */
+.auth-panel input:-webkit-autofill,
+.auth-panel input:-webkit-autofill:hover,
+.auth-panel input:-webkit-autofill:focus,
+.auth-panel input:-webkit-autofill:active {
+    -webkit-text-fill-color: #111111;
+    -webkit-box-shadow: 0 0 0 1000px var(--auth-autofill-surface, #ffffff) inset;
+    box-shadow: 0 0 0 1000px var(--auth-autofill-surface, #ffffff) inset;
+    caret-color: #111111;
+    /* 阻止 Chrome 在填充动画的过渡里把蓝底重新露出来 */
+    transition: background-color 9999s ease-out 0s;
+}
+
+.dark .auth-panel input:-webkit-autofill,
+.dark .auth-panel input:-webkit-autofill:hover,
+.dark .auth-panel input:-webkit-autofill:focus,
+.dark .auth-panel input:-webkit-autofill:active {
+    -webkit-text-fill-color: #f5f5f5;
+    caret-color: #f5f5f5;
+    --auth-autofill-surface: #1c1c1c;
+}
+
+/* 弹窗的输入框是纯白实底，深色下也要跟着面板走，别和卡片底错开 */
+.ant-modal.landing-auth-modal .auth-panel input:-webkit-autofill {
+    --auth-autofill-surface: #ffffff;
+}
+
+.dark .ant-modal.landing-auth-modal .auth-panel input:-webkit-autofill {
+    --auth-autofill-surface: #1c1c1c;
 }

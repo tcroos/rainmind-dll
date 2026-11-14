@@ -90,7 +90,7 @@ export function CreativeAssetsPanel({
     const panel = (
         <div className="flex h-full min-h-0 flex-col bg-white dark:bg-[#15181c]">
             <div className="hidden h-14 shrink-0 items-center gap-2 border-b border-[#eceef1] px-4 lg:flex dark:border-[#2b3036]">
-                <LibraryBig className="size-4 text-[#5b61cf] dark:text-[#b4b7ff]" />
+                <LibraryBig className="size-4 text-[var(--ink-2)]" />
                 <h2 className="min-w-0 flex-1 text-sm font-semibold text-[#20242a] dark:text-[#f3f5f7]">资产</h2>
                 <Tooltip title="关闭资产面板">
                     <Button type="text" shape="circle" icon={<X className="size-4" />} onClick={onClose} aria-label="关闭资产面板" />
@@ -101,7 +101,7 @@ export function CreativeAssetsPanel({
                     activeKey={activeTab}
                     onChange={(key) => setActiveTab(key as AssetPanelTab)}
                     tabBarGutter={0}
-                    className="creative-assets-tabs !flex !h-full !min-h-0 !flex-col px-3 [&_.ant-tabs-body-holder]:!min-h-0 [&_.ant-tabs-body-holder]:!flex-1 [&_.ant-tabs-body-holder]:!overflow-hidden [&_.ant-tabs-body]:!h-full [&_.ant-tabs-body]:!min-h-0 [&_.ant-tabs-content]:!h-full [&_.ant-tabs-content]:!min-h-0 [&_.ant-tabs-ink-bar]:!bg-[#6268d8] [&_.ant-tabs-nav-list]:w-full [&_.ant-tabs-nav]:!shrink-0 [&_.ant-tabs-tab]:!mx-0 [&_.ant-tabs-tab]:!flex-1 [&_.ant-tabs-tab]:!justify-center [&_.ant-tabs-tab]:!px-1 [&_.ant-tabs-tab-btn]:!text-[#747d88] [&_.ant-tabs-tab-active_.ant-tabs-tab-btn]:!text-[#555bc7] [&_.ant-tabs-tab-active_.ant-tabs-tab-btn]:dark:!text-[#b7baff] [&_.ant-tabs-tab-btn]:dark:!text-[#959eaa] [&_.ant-tabs-tabpane]:!h-full [&_.ant-tabs-tabpane]:!min-h-0 [&_.ant-tabs-tabpane]:!overflow-hidden"
+                    className="creative-assets-tabs !flex !h-full !min-h-0 !flex-col px-3 [&_.ant-tabs-body-holder]:!min-h-0 [&_.ant-tabs-body-holder]:!flex-1 [&_.ant-tabs-body-holder]:!overflow-hidden [&_.ant-tabs-body]:!h-full [&_.ant-tabs-body]:!min-h-0 [&_.ant-tabs-content]:!h-full [&_.ant-tabs-content]:!min-h-0 [&_.ant-tabs-ink-bar]:!bg-[var(--ink-1)] [&_.ant-tabs-nav-list]:w-full [&_.ant-tabs-nav]:!shrink-0 [&_.ant-tabs-tab]:!mx-0 [&_.ant-tabs-tab]:!flex-1 [&_.ant-tabs-tab]:!justify-center [&_.ant-tabs-tab]:!px-1 [&_.ant-tabs-tab-btn]:!text-[#747d88] [&_.ant-tabs-tab-active_.ant-tabs-tab-btn]:!text-[var(--ink-1)] [&_.ant-tabs-tab-btn]:dark:!text-[#959eaa] [&_.ant-tabs-tabpane]:!h-full [&_.ant-tabs-tabpane]:!min-h-0 [&_.ant-tabs-tabpane]:!overflow-hidden"
                     items={[
                         {
                             key: "assets",
@@ -204,12 +204,12 @@ export function ConversationAssets({
                         <article key={asset.id} className="group min-w-0" title={asset.title}>
                             <div
                                 className={`relative aspect-square overflow-hidden rounded-md border-2 transition ${
-                                    active ? "border-[#6268d8] bg-[#f1f1ff] dark:border-[#9ca0ff] dark:bg-[#292b47]" : "border-transparent bg-[#f1f3f5] group-hover:border-[#c9ccef] dark:bg-[#24282e] dark:group-hover:border-[#666b9c]"
+                                    active ? "border-[var(--ink-1)] bg-[var(--surface-soft)] dark:border-[#8b8b95] dark:bg-[var(--surface-inset)]" : "border-transparent bg-[#f1f3f5] group-hover:border-[#d3d6dc] dark:bg-[#24282e] dark:group-hover:border-[#4a4d55]"
                                 }`}
                             >
                                 <button
                                     type="button"
-                                    className="block size-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6268d8]"
+                                    className="block size-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink-1)]"
                                     onClick={() => {
                                         const url = asset.serverUrl || asset.remoteUrl;
                                         if (!url || (asset.type !== "image" && asset.type !== "video")) return;
@@ -229,8 +229,8 @@ export function ConversationAssets({
                             <button
                                 type="button"
                                 data-testid="creative-asset-reference-action"
-                                className={`mt-1 flex h-5 w-full items-center justify-center gap-1 rounded-sm !bg-transparent !text-[11px] font-medium transition-colors hover:!bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6268d8] ${
-                                    active ? "!text-[#555bc7] dark:!text-[#c3c5ff]" : "!text-[#68727e] hover:!text-[#555bc7] dark:!text-[#aab3bd] dark:hover:!text-[#c3c5ff]"
+                                className={`mt-1 flex h-5 w-full items-center justify-center gap-1 rounded-sm !bg-transparent !text-[11px] font-medium transition-colors hover:!bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-1)] ${
+                                    active ? "!text-[var(--ink-1)]" : "!text-[var(--ink-3)] hover:!text-[var(--ink-1)]"
                                 }`}
                                 onClick={() => onToggle(asset.id)}
                                 aria-pressed={active}
@@ -257,7 +257,7 @@ function ConversationAssetTypeTab({ label, count, active, disabled, onClick }: {
             disabled={disabled}
             className={`flex h-8 items-center justify-center gap-1 rounded-md text-xs font-medium transition ${
                 active
-                    ? "bg-white text-[#555bc7] shadow-[0_1px_3px_rgba(32,36,42,0.08)] dark:bg-[#30343b] dark:text-[#c3c5ff]"
+                    ? "bg-white text-[var(--ink-1)] shadow-[0_1px_3px_rgba(32,36,42,0.08)] dark:bg-[#30343b] dark:text-[var(--ink-1)]"
                     : "text-[#68727e] hover:bg-white/70 hover:text-[#303844] disabled:cursor-default disabled:opacity-35 dark:text-[#aab3bd] dark:hover:bg-[#2a2f36] dark:hover:text-white"
             }`}
             onClick={onClick}
@@ -302,7 +302,7 @@ export function PromptList({
                     value={searchValue}
                     allowClear
                     prefix={
-                        <button type="button" className="grid size-6 place-items-center text-[#7a8490] transition hover:text-[#555bc7] dark:text-[#929ca8] dark:hover:text-[#c3c5ff]" onClick={() => onSearch(searchValue.trim())} aria-label="搜索提示词">
+                        <button type="button" className="grid size-6 place-items-center text-[#7a8490] transition hover:text-[var(--ink-1)] dark:text-[#929ca8]" onClick={() => onSearch(searchValue.trim())} aria-label="搜索提示词">
                             <Search className="size-4" />
                         </button>
                     }
@@ -331,10 +331,10 @@ export function PromptList({
                     >
                         <button
                             type="button"
-                            className="flex h-8 max-w-28 shrink-0 items-center gap-1.5 rounded-md border border-[#e1e5e9] bg-transparent px-2.5 text-xs font-medium text-[#596572] transition hover:border-[#bec2eb] hover:bg-[#f7f7ff] hover:text-[#4f55bd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6268d8] dark:border-[#343a42] dark:text-[#b4bdc7] dark:hover:border-[#666b9c] dark:hover:bg-[#24263e] dark:hover:text-[#c3c5ff]"
+                            className="flex h-8 max-w-28 shrink-0 items-center gap-1.5 rounded-md border border-[#e1e5e9] bg-transparent px-2.5 text-xs font-medium text-[#596572] transition hover:border-[#cfd3da] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-1)] dark:border-[#343a42] dark:text-[#b4bdc7] dark:hover:border-[#4a4d55] dark:hover:bg-[var(--surface-inset)] dark:hover:text-[var(--ink-1)]"
                             aria-label="提示词分类"
                         >
-                            <ListFilter className="size-3.5 shrink-0 text-[#6268d8] dark:text-[#b7baff]" />
+                            <ListFilter className="size-3.5 shrink-0 text-[var(--ink-2)]" />
                             <span className="truncate">{promptCategoryLabel(activeCategory)}</span>
                             <ChevronDown className="size-3.5 shrink-0 opacity-55" />
                         </button>
@@ -366,7 +366,7 @@ export function PromptList({
                                     {item.coverUrl ? (
                                         <button
                                             type="button"
-                                            className="block size-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6268d8]"
+                                            className="block size-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink-1)]"
                                             onClick={() => onPreview({ type: "image", url: item.coverUrl, title: item.title })}
                                             aria-label={`展开查看${item.title}`}
                                         >
@@ -381,7 +381,7 @@ export function PromptList({
                                 <button
                                     type="button"
                                     data-testid="creative-prompt-insert-action"
-                                    className="mt-1 flex h-5 w-full items-center justify-center gap-1 rounded-sm !bg-transparent !text-[11px] !text-[#68727e] font-medium transition-colors hover:!bg-transparent hover:!text-[#555bc7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6268d8] dark:!text-[#aab3bd] dark:hover:!text-[#c3c5ff]"
+                                    className="mt-1 flex h-5 w-full items-center justify-center gap-1 rounded-sm !bg-transparent !text-[11px] !text-[#68727e] font-medium transition-colors hover:!bg-transparent hover:!text-[var(--ink-1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-1)] dark:!text-[var(--ink-3)]"
                                     onClick={() => onUse(item.prompt)}
                                     aria-label={`插入：${item.title}`}
                                 >

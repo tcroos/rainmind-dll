@@ -1,6 +1,6 @@
-import type { CanvasProject, CanvasProjectMutation, CanvasProjectSaveAck, CanvasProjectSummary, CanvasProjectSummaryPage } from "@/lib/canvas-project-contract";
+import type { CanvasProject, CanvasProjectMutation, CanvasProjectPreview, CanvasProjectSaveAck, CanvasProjectSummary, CanvasProjectSummaryPage } from "@/lib/canvas-project-contract";
 import { applyCanvasProjectMutation } from "@/lib/canvas-project-mutation";
-import { summarizeCanvasProjectRecord } from "@/lib/canvas-project-summary";
+import { CANVAS_SUMMARY_PREVIEW_LIMIT, summarizeCanvasProjectRecord } from "@/lib/canvas-project-summary";
 import { summarizeCanvasProject, type CreateOverviewMedia, type CreateOverviewProject } from "@/lib/create-workbench-overview";
 import { readJsonDataFile, withJsonDataFileLock, writeJsonDataFile } from "@/lib/server/data-adapter";
 import { ensurePostgresSchema, getDatabaseProvider, postgresQuery } from "@/lib/server/database";
@@ -52,32 +52,68 @@ export async function listCanvasProjectPage(userId: string, input: { page: numbe
     return { ...input, items: projects.slice(offset, offset + input.pageSize), total: projects.length };
 }
 
-export async function listCanvasProjectSummaries(userId: string, input: { page: number; pageSize: number }): Promise<CanvasProjectSummaryPage> {
+export async function listCanvasProjectSummaries(userId: string, input: { page: number; pageSize: number; keyword?: string }): Promise<CanvasProjectSummaryPage> {
     const offset = (input.page - 1) * input.pageSize;
+    const keyword = (input.keyword || "").trim().slice(0, 60);
     if (getDatabaseProvider() === "postgres") {
         await ensurePostgresSchema();
         const result = await postgresQuery<Record<string, unknown>>(
             `WITH filtered AS (
-                 SELECT id, title, created_at, updated_at,
+                 SELECT id, title, created_at, updated_at, project_json,
                         project_json->>'sourceHandoffId' AS source_handoff_id,
                         project_json->>'creativeConversationId' AS creative_conversation_id,
                         jsonb_array_length(CASE WHEN jsonb_typeof(project_json->'nodes') = 'array' THEN project_json->'nodes' ELSE '[]'::jsonb END) AS node_count,
                         jsonb_array_length(CASE WHEN jsonb_typeof(project_json->'connections') = 'array' THEN project_json->'connections' ELSE '[]'::jsonb END) AS connection_count
                  FROM canvas_projects
                  WHERE user_id = $1
+                   AND ($4::text = '' OR strpos(lower(title), lower($4::text)) > 0)
              ), page_items AS (
-                 SELECT * FROM filtered ORDER BY updated_at DESC, id ASC LIMIT $2 OFFSET $3
+                 -- 封面聚合只对当前页做：放在 LIMIT 之后，避免整表展开 jsonb
+                 SELECT page_projects.*,
+                        COALESCE((
+                            SELECT jsonb_agg(jsonb_build_object('kind', preview.kind, 'url', preview.url) ORDER BY preview.status_order, preview.kind_order, preview.node_order, preview.url_order)
+                            FROM (
+                                SELECT
+                                    CASE WHEN node->>'type' = 'video' THEN 'video' ELSE 'image' END AS kind,
+                                    media.url,
+                                    CASE WHEN node->'metadata'->>'status' = 'success' THEN 0 ELSE 1 END AS status_order,
+                                    CASE WHEN node->>'type' IN ('image', 'panorama') THEN 0 ELSE 1 END AS kind_order,
+                                    node_order,
+                                    media.url_order
+                                FROM jsonb_array_elements(CASE WHEN jsonb_typeof(page_projects.project_json->'nodes') = 'array' THEN page_projects.project_json->'nodes' ELSE '[]'::jsonb END) WITH ORDINALITY AS project_node(node, node_order)
+                                CROSS JOIN LATERAL (
+                                    VALUES
+                                        (node->'metadata'->>'serverUrl', 1),
+                                        (node->'metadata'->>'remoteUrl', 2),
+                                        (node->'metadata'->>'content', 3)
+                                ) AS media(url, url_order)
+                                WHERE node->>'type' IN ('image', 'panorama', 'video')
+                                  AND COALESCE(node->'metadata'->>'status', '') <> 'error'
+                                  AND COALESCE(btrim(media.url), '') <> ''
+                                  AND media.url !~* '^(data|blob):'
+                                ORDER BY status_order, kind_order, node_order, media.url_order
+                                LIMIT $5
+                            ) preview
+                        ), '[]'::jsonb) AS previews
+                 FROM (
+                     SELECT * FROM filtered ORDER BY updated_at DESC, id ASC LIMIT $2 OFFSET $3
+                 ) page_projects
              )
-             SELECT page_items.*, totals.total_count
+             SELECT page_items.id, page_items.title, page_items.created_at, page_items.updated_at,
+                    page_items.source_handoff_id, page_items.creative_conversation_id,
+                    page_items.node_count, page_items.connection_count, page_items.previews,
+                    totals.total_count
              FROM (SELECT count(*)::integer AS total_count FROM filtered) totals
              LEFT JOIN page_items ON TRUE
              ORDER BY page_items.updated_at DESC NULLS LAST, page_items.id ASC`,
-            [userId, input.pageSize, offset],
+            [userId, input.pageSize, offset, keyword, CANVAS_SUMMARY_PREVIEW_LIMIT],
         );
-        return { projects: result.rows.filter((row) => row.id).map(mapProjectSummary), total: Math.max(0, Number(result.rows[0]?.total_count) || 0), ...input };
+        return { projects: result.rows.filter((row) => row.id).map(mapProjectSummary), total: Math.max(0, Number(result.rows[0]?.total_count) || 0), page: input.page, pageSize: input.pageSize };
     }
-    const projects = (await listCanvasProjects(userId)).map(summarizeCanvasProjectRecord);
-    return { projects: projects.slice(offset, offset + input.pageSize), total: projects.length, ...input };
+    const all = (await listCanvasProjects(userId)).map(summarizeCanvasProjectRecord);
+    const needle = keyword.toLowerCase();
+    const projects = needle ? all.filter((project) => project.title.toLowerCase().includes(needle)) : all;
+    return { projects: projects.slice(offset, offset + input.pageSize), total: projects.length, page: input.page, pageSize: input.pageSize };
 }
 
 export async function getLatestCanvasProjectOverview(userId: string): Promise<CreateOverviewProject | undefined> {
@@ -392,7 +428,22 @@ function mapProjectSummary(row: Record<string, unknown>): CanvasProjectSummary {
         connectionCount: Math.max(0, Number(row.connection_count) || 0),
         createdAt: isoDate(row.created_at),
         updatedAt: isoDate(row.updated_at),
+        previews: parsePreviews(row.previews),
     };
+}
+
+function parsePreviews(value: unknown) {
+    const seen = new Set<string>();
+    return jsonArray(value)
+        .flatMap((item): CanvasProjectPreview[] => {
+            const source = item && typeof item === "object" && !Array.isArray(item) ? (item as Record<string, unknown>) : {};
+            const kind = source.kind === "video" ? "video" : source.kind === "image" ? "image" : undefined;
+            const url = typeof source.url === "string" ? source.url.trim() : "";
+            if (!kind || !url || /^(data|blob):/i.test(url) || seen.has(url)) return [];
+            seen.add(url);
+            return [{ kind, url }];
+        })
+        .slice(0, CANVAS_SUMMARY_PREVIEW_LIMIT);
 }
 
 function jsonArray(value: unknown): unknown[] {

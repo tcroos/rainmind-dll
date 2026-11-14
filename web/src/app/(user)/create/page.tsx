@@ -7,7 +7,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useRouter } from "next/navigation";
 
 import { CREATIVE_UPLOAD_ACCEPT, CREATIVE_UPLOAD_MAX_BYTES, isCreativeUploadMimeType } from "@/lib/creative-upload";
-import type { CreateOverviewAsset } from "@/lib/create-workbench-overview";
 import type { CreativeAsset, CreativeGenerationMode, CreativeGenerationPreferences, CreativeMessage } from "@/lib/creative-runtime-contract";
 import { reconcileCreativeGenerationPreferences } from "@/lib/creative-model-capabilities";
 import { cn } from "@/lib/utils";
@@ -21,6 +20,7 @@ import type { PublicGalleryItem } from "@/services/api/work-governance";
 import { createAgentDraftFromHash } from "@/lib/create-agent-prompt";
 import { resolveSiteTitle } from "@/lib/site-brand";
 
+import { CreateDotField } from "./components/create-dot-field";
 import { CreativeComposer } from "./components/creative-composer";
 import { CreativeAssetsPanel } from "./components/creative-assets-panel";
 import { applyAgentGenerationCapability, shouldShowVideoFrameControls } from "./components/creative-composer-video-mode";
@@ -31,13 +31,16 @@ import { CreateWorkbenchOverview } from "./components/create-workbench-overview"
 import { publicCreativeAssetPrompt, remapCreativeAssetReferences } from "./components/creative-asset-mention";
 import { createConversationHref, createConversationIdFromSearch } from "./create-conversation-navigation";
 import { creativeConversationScrollTransition } from "./create-conversation-scroll";
+import { homeComposerDocked } from "./create-home-dock";
 import { useCreateAgent } from "./use-create-agent";
 
+/* 功能胶囊：图标统一用主题橙（同一色相、只做点缀），
+ * 既不回到「天蓝/紫/翡翠/红四色」那种碎，也不至于整页只有黑白。 */
 const SKILL_VISUALS = [
-    { icon: ShoppingBag, iconClass: "text-sky-600 dark:text-sky-300", surfaceClass: "bg-sky-50 dark:bg-sky-400/10" },
-    { icon: ScanFace, iconClass: "text-violet-600 dark:text-violet-300", surfaceClass: "bg-violet-50 dark:bg-violet-400/10" },
-    { icon: Play, iconClass: "text-emerald-600 dark:text-emerald-300", surfaceClass: "bg-emerald-50 dark:bg-emerald-400/10" },
-    { icon: Clapperboard, iconClass: "text-red-500 dark:text-red-300", surfaceClass: "bg-red-50 dark:bg-red-400/10" },
+    { icon: ShoppingBag, iconClass: "text-[var(--brand-600)]", surfaceClass: "bg-[var(--brand-soft)]" },
+    { icon: ScanFace, iconClass: "text-[var(--brand-600)]", surfaceClass: "bg-[var(--brand-soft)]" },
+    { icon: Play, iconClass: "text-[var(--brand-600)]", surfaceClass: "bg-[var(--brand-soft)]" },
+    { icon: Clapperboard, iconClass: "text-[var(--brand-600)]", surfaceClass: "bg-[var(--brand-soft)]" },
 ] as const;
 
 export default function CreatePage() {
@@ -74,13 +77,24 @@ export default function CreatePage() {
     const [assetsOpen, setAssetsOpen] = useState(false);
     const [awayFromLatest, setAwayFromLatest] = useState(false);
     const [composerExpanded, setComposerExpanded] = useState(true);
-    const publicSettings = usePublicSessionStore((state) => state.payload?.settings);
+    const [homeDocked, setHomeDocked] = useState(false);
+    // 输入区在流内时的实测高度，悬浮态拿它占位
+    const [dockSpacerHeight, setDockSpacerHeight] = useState(0);
+    const dockAnchorRef = useRef<HTMLDivElement>(null);
+    // 输入区底边在滚动内容坐标系里的位置（只在上方态测量，收起后沿用）
+    const composerOriginRef = useRef(0);
+    // 给滚动回调用的镜像，避免回调随 state 变化而重建
+    const homeDockedRef = useRef(false);
+    const showConversationRef = useRef(false);
+    const composerMeasureRef = useRef<HTMLDivElement>(null);    const publicSettings = usePublicSessionStore((state) => state.payload?.settings);
     const siteTitle = resolveSiteTitle(publicSettings?.site?.title);
     const agent = useCreateAgent();
     const openAgentConversation = agent.openConversation;
     const newAgentConversation = agent.newConversation;
     const hasConversation = agent.messages.length > 0;
     const showConversation = hasConversation || agent.conversationLoading;
+    showConversationRef.current = showConversation;
+    homeDockedRef.current = homeDocked;
     const selectedSkill = skills.find((skill) => skill.id === selectedSkillId);
     const modelOptions = useCreativeAgentModels();
     const selectedModels = modelOptions.filter((model) => selectedModelIds.includes(model.id));
@@ -145,7 +159,48 @@ export default function CreatePage() {
         touchScrollYRef.current = undefined;
         setAwayFromLatest(false);
         setComposerExpanded(true);
+        setHomeDocked(false);
     }, [agent.conversationId]);
+
+    // 悬浮态需要知道输入区在流内时的高度，靠它占位，避免收起时整页跳动
+    useLayoutEffect(() => {
+        const element = composerMeasureRef.current;
+        if (!element || homeDocked) return;
+        const measure = () => setDockSpacerHeight(element.offsetHeight);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [homeDocked, showConversation]);
+
+    // 上方输入区真正滚到看不见（底边越过滚动区顶边）才浮出底部小胶囊，回滚留迟滞带防止抖动。
+    // 判定只用「滚动量 vs 输入区底边在内容坐标系里的位置」，不用输入的实时位置——否则收起瞬间
+    // 输入区被移到屏幕底部，再量一次就会被判成"没滚走"，于是来回抖。
+    // 这个回调必须保持稳定引用：它会被 resize effect 订阅，一旦随 homeDocked 变化就会在
+    // "改状态 → effect 重跑 → 再改状态" 之间自激。
+    const updateHomeDocked = useCallback((element: HTMLElement) => {
+        if (showConversationRef.current) return;
+        const docked = homeDockedRef.current;
+        if (!docked) {
+            const anchor = dockAnchorRef.current;
+            if (!anchor) return;
+            composerOriginRef.current = anchor.getBoundingClientRect().bottom - element.getBoundingClientRect().top + element.scrollTop;
+        }
+        const next = homeComposerDocked({ scrollTop: element.scrollTop, origin: composerOriginRef.current, docked });
+        if (next === docked) return;
+        homeDockedRef.current = next;
+        setHomeDocked(next);
+    }, []);
+
+    // 窗口尺寸变化会改变输入区底边的位置，立刻重算一次停靠状态
+    useEffect(() => {
+        const element = conversationScrollRef.current;
+        if (!element) return;
+        const sync = () => updateHomeDocked(element);
+        sync();
+        window.addEventListener("resize", sync);
+        return () => window.removeEventListener("resize", sync);
+    }, [updateHomeDocked]);
 
     useEffect(() => {
         const wasLoading = conversationWasLoadingRef.current;
@@ -314,10 +369,6 @@ export default function CreatePage() {
         const preview = item.preview;
         if (!preview || preview.mediaType !== "image") return;
         await importReferenceMedia({ url: preview.url, mimeType: preview.mimeType, fileStem: item.slug });
-    };
-
-    const useRecentAsset = async (asset: CreateOverviewAsset) => {
-        await importReferenceMedia({ url: asset.url, fileStem: asset.id });
     };
 
     const selectSkill = (skill: AgentSkillSummary) => {
@@ -518,9 +569,14 @@ export default function CreatePage() {
             creationMode={creationMode}
             generationPreferences={generationPreferences}
             uploading={agent.uploading}
-            compact={composerCompact}
+            compact={composerCompact || (!showConversation && homeDocked)}
+            floating={!showConversation && homeDocked}
             onExpand={() => {
                 setComposerExpanded(true);
+                if (!showConversation) {
+                    setHomeDocked(false);
+                    conversationScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                }
                 window.requestAnimationFrame(() => inputRef.current?.focus());
             }}
             onRemoveAttachment={removeAttachment}
@@ -555,9 +611,9 @@ export default function CreatePage() {
     );
 
     const historyPanel = (
-        <div className="flex h-full min-h-0 flex-col bg-white dark:bg-[#181b20]">
-            <div className="hidden h-14 shrink-0 items-center gap-2 border-b border-[#eceef1] px-4 lg:flex dark:border-[#2b3036]">
-                <History className="size-4 text-[#5b61cf] dark:text-[#b4b7ff]" />
+        <div className="flex h-full min-h-0 flex-col">
+            <div className="hidden h-14 shrink-0 items-center gap-2 px-4 lg:flex">
+                <History className="size-4 text-[var(--ink-2)]" />
                 <h2 className="min-w-0 flex-1 text-sm font-semibold text-[#20242a] dark:text-[#f3f5f7]">创作历史</h2>
                 <Button type="text" shape="circle" icon={<X className="size-4" />} onClick={() => setHistoryOpen(false)} aria-label="关闭创作历史" title="关闭创作历史" />
             </div>
@@ -601,16 +657,17 @@ export default function CreatePage() {
     );
 
     return (
-        <main className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#fcfdff_100%)] text-[#20242a] dark:bg-[linear-gradient(180deg,#111316_0%,#12151a_100%)] dark:text-[#f3f5f7]">
-            <div className="flex min-h-0 flex-1">
-                {historyOpen && screens.lg ? <aside className="h-full min-h-0 w-[min(280px,24vw)] shrink-0 border-r border-[#eceef1] dark:border-[#2b3036]">{historyPanel}</aside> : null}
+        <main className="relative flex h-full min-h-0 flex-col overflow-hidden text-[var(--ink-1)]">
+            <CreateDotField />
+            <div className="relative flex min-h-0 flex-1">
+                {historyOpen && screens.lg ? <aside className="h-full min-h-0 w-[min(280px,24vw)] shrink-0 bg-[var(--surface-rail)]">{historyPanel}</aside> : null}
                 <div className="relative flex min-w-0 flex-1 flex-col">
                     <div className="pointer-events-none absolute right-3 top-3 z-30 flex items-center gap-0.5 sm:right-5" data-testid="creative-page-tools">
                         {hasConversation ? (
                             <Button
                                 type="text"
                                 shape="circle"
-                                className="pointer-events-auto !size-9 !min-w-9 !text-[#68727e] hover:!bg-[#f1f3f5] hover:!text-[#20242a] dark:!text-[#aab2bc] dark:hover:!bg-[#262b31] dark:hover:!text-white"
+                                className="pointer-events-auto !size-9 !min-w-9 !text-[var(--ink-2)] hover:!bg-[var(--surface-soft)] hover:!text-[var(--ink-1)]"
                                 icon={<Plus className="size-4" />}
                                 onClick={newConversation}
                                 aria-label="新建对话"
@@ -622,8 +679,8 @@ export default function CreatePage() {
                             shape="circle"
                             className={
                                 historyOpen
-                                    ? "pointer-events-auto !size-9 !min-w-9 !bg-[#eeeeff] !text-[#565ccb] dark:!bg-[#2c2e4b] dark:!text-[#b8bbff]"
-                                    : "pointer-events-auto !size-9 !min-w-9 !text-[#68727e] hover:!bg-[#f1f3f5] hover:!text-[#20242a] dark:!text-[#aab2bc] dark:hover:!bg-[#262b31] dark:hover:!text-white"
+                                    ? "pointer-events-auto !size-9 !min-w-9 !bg-[var(--surface-inset)] !text-[var(--ink-1)]"
+                                    : "pointer-events-auto !size-9 !min-w-9 !text-[var(--ink-2)] hover:!bg-[var(--surface-soft)] hover:!text-[var(--ink-1)]"
                             }
                             icon={<History className="size-4" />}
                             onClick={() => {
@@ -640,8 +697,8 @@ export default function CreatePage() {
                             icon={<FolderOpen className="size-4" />}
                             className={
                                 assetsOpen
-                                    ? "pointer-events-auto !size-9 !min-w-9 !bg-[#eeeeff] !text-[#565ccb] dark:!bg-[#2c2e4b] dark:!text-[#b8bbff]"
-                                    : "pointer-events-auto !size-9 !min-w-9 !text-[#68727e] hover:!bg-[#f1f3f5] hover:!text-[#20242a] dark:!text-[#aab2bc] dark:hover:!bg-[#262b31] dark:hover:!text-white"
+                                    ? "pointer-events-auto !size-9 !min-w-9 !bg-[var(--surface-inset)] !text-[var(--ink-1)]"
+                                    : "pointer-events-auto !size-9 !min-w-9 !text-[var(--ink-2)] hover:!bg-[var(--surface-soft)] hover:!text-[var(--ink-1)]"
                             }
                             onClick={() => {
                                 setAssetsOpen((current) => !current);
@@ -657,7 +714,10 @@ export default function CreatePage() {
                         ref={conversationScrollRef}
                         data-testid="creative-conversation-scroll"
                         className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
-                        onScroll={(event) => updateConversationScrollState(event.currentTarget)}
+                        onScroll={(event) => {
+                            updateConversationScrollState(event.currentTarget);
+                            updateHomeDocked(event.currentTarget);
+                        }}
                         onWheelCapture={(event) => {
                             if (event.deltaY < 0) scrollingAwayFromLatestRef.current = true;
                             else if (event.deltaY > 0) scrollingAwayFromLatestRef.current = false;
@@ -700,35 +760,69 @@ export default function CreatePage() {
                                 followLatest={!awayFromLatest}
                             />
                         ) : (
-                            <div className="mx-auto flex min-h-full w-full min-w-0 max-w-[1240px] flex-col items-center px-2.5 pb-3 pt-5 sm:px-8 sm:pb-8 sm:pt-14 lg:pt-[10vh]">
+                            <div
+                                className="mx-auto flex min-h-full w-full min-w-0 max-w-[1240px] flex-col items-center px-2.5 pb-3 pt-5 sm:px-8 sm:pb-8 sm:pt-14 lg:pt-[10vh]"
+                                style={homeDocked ? { paddingBottom: 104 } : undefined}
+                            >
                                 <div className="text-center">
                                     <h1 className="text-[23px] font-semibold leading-tight sm:text-[31px]">{siteTitle} 创作 Agent</h1>
                                     <p className="mt-2 text-sm text-[#8b949f] dark:text-[#7f8996]">从一个想法开始</p>
                                 </div>
-                                <div ref={composerHostRef} data-testid="creative-composer-dock" data-compact="false" className="mt-5 w-full sm:mt-8">
-                                    {composer}
+                                <div
+                                    ref={composerHostRef}
+                                    data-testid="creative-composer-dock"
+                                    data-compact={homeDocked ? "true" : "false"}
+                                    className={cn(
+                                        "w-full",
+                                        homeDocked
+                                            ? "pointer-events-none absolute inset-x-0 bottom-0 z-30 px-2.5 pb-3 sm:px-8 sm:pb-5"
+                                            : "relative z-20 mt-5 sm:mt-8",
+                                    )}
+                                >
+                                    <div
+                                        ref={composerMeasureRef}
+                                        className={cn(
+                                            "relative",
+                                            homeDocked && "pointer-events-auto mx-auto w-full max-w-[620px]",
+                                        )}
+                                    >
+                                        {composer}
+                                    </div>
                                 </div>
-                                <div className="mt-2 flex w-full min-w-0 flex-wrap justify-center gap-1.5 sm:mt-3 sm:gap-2">
-                                    {skillsLoading ? <span className="px-2 py-2 text-xs text-[#9aa2ad]">正在加载创作 Skill...</span> : null}
-                                    {skills.map((skill, index) => {
-                                        const visual = skillVisual(skill, index);
-                                        const Icon = visual.icon;
-                                        return (
-                                            <button
-                                                key={skill.id}
-                                                type="button"
-                                                aria-label={`使用 ${skill.name} Skill`}
-                                                title={skill.description}
-                                                className="inline-flex h-9 items-center gap-2 rounded-full border border-[#e3e7eb] bg-white px-3 text-sm font-medium text-[#343b44] transition hover:border-[#cfd6dd] hover:bg-[#f7f8fa] dark:border-[#343a42] dark:bg-[#181b20] dark:text-[#dce1e7] dark:hover:border-[#4a525d] dark:hover:bg-[#20242a]"
-                                                onClick={() => selectSkill(skill)}
-                                            >
-                                                <Icon className={`size-4 ${visual.iconClass}`} />
-                                                <span>{skill.name}</span>
-                                            </button>
-                                        );
-                                    })}
+                                {/* 占位锚点：任何时候都留在输入区原位，既托住滚动位置，也作为“输入框底边”的测量基准 */}
+                                <div
+                                    ref={dockAnchorRef}
+                                    aria-hidden
+                                    data-testid="creative-composer-dock-anchor"
+                                    className={cn("w-full shrink-0", homeDocked && "mt-5 sm:mt-8")}
+                                    style={{ height: homeDocked ? dockSpacerHeight : 0 }}
+                                />
+                                <div className="mt-2.5 flex w-full max-w-[900px] min-w-0 items-center gap-2 sm:mt-3">
+                                    <span className="hidden shrink-0 pl-1 text-[13px] font-medium text-[var(--ink-3)] sm:inline">快捷</span>
+                                    <div className="hide-scrollbar scroll-fade-x flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-0.5">
+                                        {skillsLoading ? <span className="shrink-0 px-1 text-xs text-[#9aa2ad]">正在加载 Skill…</span> : null}
+                                        {skills.map((skill, index) => {
+                                            const visual = skillVisual(skill, index);
+                                            const Icon = visual.icon;
+                                            return (
+                                                <button
+                                                    key={skill.id}
+                                                    type="button"
+                                                    aria-label={`使用 ${skill.name} Skill`}
+                                                    title={skill.description}
+                                                    className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-[7px] bg-[var(--surface-panel)] pr-2.5 pl-1 text-[13px] text-[var(--ink-1)] shadow-[0_1px_2px_rgba(17,17,19,0.05)] transition-colors hover:bg-[var(--surface-inset)]"
+                                                    onClick={() => selectSkill(skill)}
+                                                >
+                                                    <span className={cn("grid size-5 shrink-0 place-items-center rounded-[5px]", visual.surfaceClass)}>
+                                                        <Icon className={cn("size-3.5", visual.iconClass)} />
+                                                    </span>
+                                                    <span>{skill.name}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <CreateWorkbenchOverview onUseAsset={useRecentAsset} />
+                                <CreateWorkbenchOverview />
                                 <CreateInspirationGallery onUsePrompt={usePublicPrompt} onUseImage={usePublicImage} />
                             </div>
                         )}

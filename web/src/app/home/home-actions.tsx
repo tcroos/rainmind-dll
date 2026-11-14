@@ -1,12 +1,9 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { Modal } from "antd";
 import { useRouter } from "next/navigation";
 
-import { AuthForm } from "@/components/auth/auth-form";
 import { BillingPlansModal } from "@/components/billing/billing-plans-modal";
-import { SiteLogo } from "@/components/layout/site-logo";
 import { createAgentPromptHref, type CreateAgentMode } from "@/lib/create-agent-prompt";
 import { usePublicSessionStore } from "@/stores/use-public-session-store";
 import { useUserStore } from "@/stores/use-user-store";
@@ -27,8 +24,6 @@ const HomeActionsContext = createContext<HomeActions | null>(null);
 
 export function HomeActionsProvider({ initialSite, children }: { initialSite: HomeSiteSettings; children: ReactNode }) {
     const router = useRouter();
-    const [authOpen, setAuthOpen] = useState(false);
-    const [authNextPath, setAuthNextPath] = useState("/create");
     const [billingPlansOpen, setBillingPlansOpen] = useState(false);
     const user = useUserStore((state) => state.user);
     const session = usePublicSessionStore((state) => state.payload);
@@ -47,9 +42,11 @@ export function HomeActionsProvider({ initialSite, children }: { initialSite: Ho
     );
     const authenticated = sessionReady && Boolean(user);
 
+    /* 营销页不再弹登录框：所有需要账号的入口统一跳整页登录，
+     * 并把原本想去的地方放在 next 上。/login 会用 safeNextPath 校验后带回来，
+     * 登录成功直接回到刚才的入口（默认 /create），hero 里输入的 prompt 也不会丢。 */
     const openLogin = (nextPath = "/create") => {
-        setAuthNextPath(nextPath);
-        setAuthOpen(true);
+        router.push(`/login?next=${encodeURIComponent(nextPath)}`);
     };
     const openProtectedPath = (path: string) => {
         if (authenticated) router.push(path);
@@ -60,28 +57,6 @@ export function HomeActionsProvider({ initialSite, children }: { initialSite: Ho
     return (
         <HomeActionsContext.Provider value={{ authenticated, sessionReady, site, openLogin, openBillingPlans: () => setBillingPlansOpen(true), openProtectedPath, startCreating }}>
             {children}
-            <Modal
-                centered
-                open={authOpen}
-                width={440}
-                footer={null}
-                title={null}
-                destroyOnHidden
-                onCancel={() => setAuthOpen(false)}
-                className="landing-auth-modal"
-                rootClassName="landing-auth-root"
-            >
-                <div className="landing-auth-modal-shell">
-                    <header className="landing-auth-modal-head">
-                        <SiteLogo logoUrl={site.logoUrl} className="landing-auth-head-logo" />
-                        <h2>继续你的创作</h2>
-                        <p>已输入的内容会保留，登录后直接回到刚才的位置。</p>
-                    </header>
-                    <div className="landing-auth-modal-form">
-                        <AuthForm mode="login" variant="embedded" nextPath={authNextPath} className="min-h-0 bg-transparent p-0 shadow-none" />
-                    </div>
-                </div>
-            </Modal>
             <BillingPlansModal open={billingPlansOpen} onClose={() => setBillingPlansOpen(false)} onSelect={(product) => openProtectedPath(`/billing/checkout?product=${encodeURIComponent(product.id)}`)} />
         </HomeActionsContext.Provider>
     );

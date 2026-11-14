@@ -1,7 +1,9 @@
 import type { CanvasProject, CanvasProjectMutation, CanvasProjectSaveAck, CanvasProjectSummaryPage, CreateCanvasProjectInput } from "@/lib/canvas-project-contract";
 
-export function listCanvasProjectSummaries(input: { page: number; pageSize: number }) {
+export function listCanvasProjectSummaries(input: { page: number; pageSize: number; keyword?: string }) {
     const query = new URLSearchParams({ page: String(input.page), pageSize: String(input.pageSize) });
+    const keyword = input.keyword?.trim();
+    if (keyword) query.set("keyword", keyword);
     return request<CanvasProjectSummaryPage>(`/api/canvas/projects?${query}`, { cache: "no-store" });
 }
 

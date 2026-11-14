@@ -21,9 +21,14 @@ type CanvasStore = {
     summaryTotal: number;
     summaryPage: number;
     summaryPageSize: number;
+    /** 列表搜索关键词：翻页时保留，项目改名不会自动清空 */
+    summaryKeyword: string;
+    /** 翻页/搜索时的"后台刷新"标记：有旧数据时不清空列表，只做淡出，避免整页闪成加载态 */
+    summaryBusy: boolean;
     projects: CanvasProject[];
     saveStateByProject: Record<string, CanvasProjectSaveState>;
-    hydrate: (force?: boolean, page?: number) => Promise<void>;
+    hydrate: (force?: boolean, page?: number, keyword?: string) => Promise<void>;
+    searchProjects: (keyword: string) => Promise<void>;
     loadProject: (id: string, force?: boolean) => Promise<CanvasProject>;
     createProject: (title?: string) => Promise<string>;
     importProject: (project: Partial<CanvasProject>, sourceHandoffId?: string) => Promise<string>;
@@ -53,42 +58,52 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     summaryTotal: 0,
     summaryPage: 1,
     summaryPageSize: 12,
+    summaryKeyword: "",
+    summaryBusy: false,
     projects: [],
     saveStateByProject: {},
-    hydrate: async (force = false, requestedPage) => {
+    hydrate: async (force = false, requestedPage, requestedKeyword) => {
         const userId = useUserStore.getState().user?.id || "";
+        const keyword = requestedKeyword === undefined ? get().summaryKeyword : requestedKeyword.trim();
         if (!userId) {
             invalidateSession();
-            set({ hydrated: true, hydratedUserId: "", summaries: [], summaryTotal: 0, summaryPage: 1, projects: [], saveStateByProject: {}, syncError: undefined });
+            set({ hydrated: true, hydratedUserId: "", summaries: [], summaryTotal: 0, summaryPage: 1, summaryKeyword: keyword, summaryBusy: false, projects: [], saveStateByProject: {}, syncError: undefined });
             return;
         }
         const page = requestedPage || (get().hydratedUserId === userId ? get().summaryPage : 1);
         const pageSize = get().summaryPageSize;
-        if (!force && get().hydrated && get().hydratedUserId === userId && get().summaryPage === page) return;
+        if (!force && get().hydrated && get().hydratedUserId === userId && get().summaryPage === page && get().summaryKeyword === keyword) return;
         const session = sessionEpoch.capture();
         if (!force && hydrateRequest?.userId === session.userId && hydrateRequest.epoch === session.epoch) return hydrateRequest.promise;
         const requestId = ++hydrateRequestId;
+        const warm = get().hydrated && get().hydratedUserId === userId;
         set((state) => ({
-            hydrated: false,
+            hydrated: warm ? true : false,
+            summaryBusy: true,
             hydratedUserId: userId,
             summaries: state.hydratedUserId === userId ? state.summaries : [],
             projects: state.hydratedUserId === userId ? state.projects : [],
             saveStateByProject: state.hydratedUserId === userId ? state.saveStateByProject : {},
             syncError: undefined,
         }));
-        const promise = loadSummaryPage(page, pageSize)
+        const promise = loadSummaryPage(page, pageSize, keyword)
             .then((result) => {
                 if (!isActiveHydrate(session, requestId)) return;
-                set({ summaries: result.projects, summaryTotal: result.total, summaryPage: result.page, summaryPageSize: result.pageSize, hydrated: true, hydratedUserId: userId });
+                set({ summaries: result.projects, summaryTotal: result.total, summaryPage: result.page, summaryPageSize: result.pageSize, summaryKeyword: keyword, summaryBusy: false, hydrated: true, hydratedUserId: userId });
             })
             .catch((error) => {
-                if (isActiveHydrate(session, requestId)) set({ summaries: [], hydrated: false, hydratedUserId: userId, syncError: error instanceof Error ? error.message : "画布项目加载失败" });
+                if (isActiveHydrate(session, requestId)) set({ summaries: [], hydrated: false, summaryBusy: false, hydratedUserId: userId, summaryKeyword: keyword, syncError: error instanceof Error ? error.message : "画布项目加载失败" });
             })
             .finally(() => {
                 if (hydrateRequest?.requestId === requestId) hydrateRequest = null;
             });
         hydrateRequest = { ...session, requestId, promise };
         return promise;
+    },
+    searchProjects: async (keyword) => {
+        const next = keyword.trim();
+        if (next === get().summaryKeyword) return;
+        await get().hydrate(true, 1, next);
     },
     loadProject: async (id, force = false) => {
         const session = requireSession();
@@ -205,7 +220,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     },
     reset: () => {
         invalidateSession();
-        set({ hydrated: false, hydratedUserId: "", summaries: [], summaryTotal: 0, summaryPage: 1, projects: [], saveStateByProject: {}, syncError: undefined });
+        set({ hydrated: false, hydratedUserId: "", summaries: [], summaryTotal: 0, summaryPage: 1, summaryKeyword: "", summaryBusy: false, projects: [], saveStateByProject: {}, syncError: undefined });
     },
 }));
 
@@ -389,8 +404,10 @@ function upsertSummary(summaries: CanvasProjectSummary[], project: CanvasProject
     return [summary, ...summaries.filter((item) => item.id !== project.id)].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
 }
 
-async function loadSummaryPage(page: number, pageSize: number) {
-    const result = await listCanvasProjectSummaries({ page, pageSize });
+async function loadSummaryPage(page: number, pageSize: number, keyword = "") {
+    // 空关键词不往 query 里塞，保证没搜索时的请求形状和以前一致
+    const query = keyword ? { page, pageSize, keyword } : { page, pageSize };
+    const result = await listCanvasProjectSummaries(query);
     const lastPage = Math.max(1, Math.ceil(result.total / result.pageSize));
-    return result.page > lastPage ? listCanvasProjectSummaries({ page: lastPage, pageSize: result.pageSize }) : result;
+    return result.page > lastPage ? listCanvasProjectSummaries({ ...query, page: lastPage, pageSize: result.pageSize }) : result;
 }

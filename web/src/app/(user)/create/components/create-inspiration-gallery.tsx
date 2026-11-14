@@ -66,19 +66,19 @@ export function CreateInspirationGallery({ onUsePrompt, onUseImage }: { onUsePro
                 <h2 id="create-inspiration-heading" className="text-[15px] font-semibold text-[#20242a] dark:text-[#f3f5f7]">
                     灵感发现
                 </h2>
-                <Link href="/community" className="text-xs text-[#697381] transition hover:text-[#20242a] dark:text-[#9aa3af] dark:hover:text-white">
+                <Link href="/community" className="text-xs text-[#697381] transition hover:text-[var(--brand-600)] dark:text-[#9aa3af]">
                     查看全部 →
                 </Link>
             </div>
 
-            <nav className="hide-scrollbar mt-3 flex min-w-0 gap-1 overflow-x-auto border-b border-[#e8ebef] pb-2 dark:border-[#292d33]" aria-label="灵感分类">
+            <nav className="hide-scrollbar mt-3 flex min-w-0 gap-1 overflow-x-auto pb-2" aria-label="灵感分类">
                 {categories.map((item) => (
                     <button
                         key={item.value || "all"}
                         type="button"
                         className={cn(
                             "h-9 shrink-0 rounded-md px-3 text-sm transition",
-                            category === item.value ? "bg-[#eef1f4] font-medium text-[#20242a] dark:bg-[#292f37] dark:text-white" : "text-[#697381] hover:bg-[#f2f4f6] hover:text-[#20242a] dark:text-[#9aa3af] dark:hover:bg-[#242930] dark:hover:text-white",
+                            category === item.value ? "bg-[var(--brand-soft)] font-medium text-[var(--brand-600)]" : "text-[var(--ink-2)] hover:bg-[var(--surface-inset)] hover:text-[var(--ink-1)]",
                         )}
                         aria-pressed={category === item.value}
                         onClick={() => setCategory(item.value)}
@@ -106,7 +106,7 @@ export function CreateInspirationGallery({ onUsePrompt, onUseImage }: { onUsePro
                     ))}
                 </ResponsiveMasonryGrid>
             ) : (
-                <div className="flex min-h-32 items-center justify-center border-b border-dashed border-[#e2e7eb] text-sm text-[#9aa2ad] dark:border-[#2b3037] dark:text-[#737d89]">当前分类还没有公开作品</div>
+                <div className="flex min-h-32 items-center justify-center text-sm text-[var(--ink-3)]">当前分类还没有公开作品</div>
             )}
             <PublicWorkPreviewModal
                 slug={previewSlug || undefined}
@@ -168,7 +168,7 @@ function InspirationCard({
 
     return (
         <article className="group w-full min-w-0 overflow-hidden text-[#20242a] dark:text-[#f3f5f7]">
-            <div className="relative overflow-hidden rounded-lg bg-[#eef1f4] dark:bg-[#252a31]">
+            <div className="relative overflow-hidden rounded-lg bg-[var(--surface-soft)]">
                 <button type="button" className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6e87db]" onClick={onOpen} aria-label={`查看作品：${item.title}`} aria-haspopup="dialog">
                     {image ? (
                         <LazyMediaImage src={imagePreviewUrl(item.preview!.url, 640)} alt={item.title} containerClassName="w-full" imageClassName="block h-auto w-full group-hover:scale-[1.015]" />
@@ -221,7 +221,7 @@ function InspirationCard({
                                 <button
                                     type="button"
                                     disabled={importing}
-                                    className="grid size-7 place-items-center rounded-md text-[#7f8996] transition hover:bg-[#eef1f4] hover:text-[#20242a] disabled:cursor-wait disabled:opacity-60 dark:hover:bg-[#252a31] dark:hover:text-white"
+                                    className="grid size-7 place-items-center rounded-md text-[var(--ink-3)] transition hover:bg-[var(--surface-inset)] hover:text-[var(--ink-1)] disabled:cursor-wait disabled:opacity-60"
                                     aria-label={`使用作品：${item.title}`}
                                     aria-haspopup="menu"
                                 >

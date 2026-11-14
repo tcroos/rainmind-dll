@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import { AnnouncementMarquee } from "@/components/layout/announcement-marquee";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { isFullscreenWorkspacePath } from "@/components/layout/app-workspace-path";
 import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
@@ -30,46 +31,55 @@ export function AppWorkspaceShell({ children }: { children: ReactNode }) {
     const fullscreen = isFullscreenWorkspacePath(pathname);
     const rootSlug = pathname.split("/").filter(Boolean)[0] || "";
     const pageTitle = tool?.label || PAGE_TITLES[rootSlug] || "工作空间";
+    /* 创作页要「背景顶到最上面」：页头是透明的，如果背景画在 <main> 里，
+     * 就只能从页头下沿开始，64px 处会留一道横向接缝。
+     * 所以把环境光挂到外壳这一层：外壳 isolate 成一个层叠上下文，
+     * 背景走 z-index:-1，正好压在底色之上、页头/侧栏/内容之下。 */
+    const ambientBackdrop = rootSlug === "create";
 
     if (fullscreen) return <div className="h-dvh min-h-0 overflow-hidden">{children}</div>;
 
     return (
-        <div className="workspace-shell flex h-dvh min-h-0 overflow-hidden bg-white text-foreground dark:bg-[#111316]">
-            <AppSidebar activeToolSlug={tool?.slug} expanded={sidebarExpanded} />
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-[#eaecf0] bg-white/96 px-3 backdrop-blur-xl sm:px-4 lg:px-7 dark:border-[#292d33] dark:bg-[#111316]/95">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                        <button
-                            type="button"
-                            className="inline-flex size-9 shrink-0 items-center justify-center rounded-md text-stone-600 transition hover:bg-stone-100 hover:text-stone-950 lg:hidden dark:text-stone-300 dark:hover:bg-stone-900 dark:hover:text-white"
-                            onClick={() => setMobileNavOpen(true)}
-                            aria-label="打开导航菜单"
-                            title="导航菜单"
-                        >
-                            <Menu className="size-5" />
-                        </button>
-                        <Link href="/create" className="inline-flex shrink-0 items-center lg:hidden" aria-label={siteTitle}>
-                            <SiteLogo logoUrl={site.logoUrl} className="size-6" />
-                        </Link>
-                        <button
-                            type="button"
-                            className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-[#68717c] transition hover:bg-[#f1f3f5] hover:text-[#20242a] lg:inline-flex dark:text-[#a5adb8] dark:hover:bg-[#22262c] dark:hover:text-white"
-                            onClick={() => setSidebarExpanded((value) => !value)}
-                            aria-label={sidebarExpanded ? "收起侧边栏" : "展开侧边栏"}
-                            title={sidebarExpanded ? "收起侧边栏" : "展开侧边栏"}
-                            aria-pressed={sidebarExpanded}
-                        >
-                            {sidebarExpanded ? <PanelLeftClose className="size-[17px]" /> : <PanelLeftOpen className="size-[17px]" />}
-                        </button>
-                        <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-[#20242a] dark:text-[#f3f5f7]">{pageTitle}</div>
+        <div className="workspace-shell relative isolate flex h-dvh min-h-0 flex-col overflow-hidden bg-[var(--surface-canvas)] text-foreground">
+            {ambientBackdrop ? <div className="create-ambient" aria-hidden data-testid="create-ambient" /> : null}
+            <AnnouncementMarquee />
+            <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+                <AppSidebar activeToolSlug={tool?.slug} expanded={sidebarExpanded} />
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <header className="relative z-20 flex h-16 shrink-0 items-center justify-between gap-3 px-3 sm:px-4 lg:px-7">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                            <button
+                                type="button"
+                                className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--surface-inset)] hover:text-[var(--ink-1)] lg:hidden"
+                                onClick={() => setMobileNavOpen(true)}
+                                aria-label="打开导航菜单"
+                                title="导航菜单"
+                            >
+                                <Menu className="size-5" />
+                            </button>
+                            <Link href="/create" className="inline-flex shrink-0 items-center lg:hidden" aria-label={siteTitle}>
+                                <SiteLogo logoUrl={site.logoUrl} className="size-6" />
+                            </Link>
+                            <button
+                                type="button"
+                                className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--surface-inset)] hover:text-[var(--ink-1)] lg:inline-flex"
+                                onClick={() => setSidebarExpanded((value) => !value)}
+                                aria-label={sidebarExpanded ? "收起侧边栏" : "展开侧边栏"}
+                                title={sidebarExpanded ? "收起侧边栏" : "展开侧边栏"}
+                                aria-pressed={sidebarExpanded}
+                            >
+                                {sidebarExpanded ? <PanelLeftClose className="size-[17px]" /> : <PanelLeftOpen className="size-[17px]" />}
+                            </button>
+                            <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold text-[var(--ink-1)]">{pageTitle}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div className="min-w-0 max-w-[calc(100vw-6.5rem)] shrink-0 overflow-visible sm:max-w-[calc(100vw-8rem)] lg:max-w-none">
-                        <UserStatusActions />
-                    </div>
-                </header>
-                <div className="min-h-0 min-w-0 flex-1 overflow-hidden bg-white dark:bg-[#111316]">{children}</div>
+                        <div className="min-w-0 max-w-[calc(100vw-6.5rem)] shrink-0 overflow-visible sm:max-w-[calc(100vw-8rem)] lg:max-w-none">
+                            <UserStatusActions />
+                        </div>
+                    </header>
+                    <div className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>
+                </div>
             </div>
             <MobileNavDrawer open={mobileNavOpen} activeToolSlug={tool?.slug} onClose={() => setMobileNavOpen(false)} />
         </div>

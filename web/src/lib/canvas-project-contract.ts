@@ -17,9 +17,16 @@ export type CanvasProject = {
     viewport: ViewportTransform;
 };
 
+/** 列表卡封面用的素材：画布内已生成的图/视频，按「成功在前、图片优先」排好序 */
+export type CanvasProjectPreview = {
+    kind: "image" | "video";
+    url: string;
+};
+
 export type CanvasProjectSummary = Pick<CanvasProject, "id" | "sourceHandoffId" | "creativeConversationId" | "title" | "createdAt" | "updatedAt"> & {
     nodeCount: number;
     connectionCount: number;
+    previews?: CanvasProjectPreview[];
 };
 
 export type CanvasProjectSummaryPage = { projects: CanvasProjectSummary[]; total: number; page: number; pageSize: number };

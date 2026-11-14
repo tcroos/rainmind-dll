@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { App, Button, Pagination } from "antd";
-import { Download, FileUp, Plus } from "lucide-react";
+import { App, Button, Input, Pagination } from "antd";
+import { Download, FileUp, Plus, Search } from "lucide-react";
 
 import { readZip } from "@/lib/zip";
+import { cn } from "@/lib/utils";
 import { APP_EXPORT_ID } from "@/lib/storage-keys";
 import { uploadMediaFile } from "@/services/file-storage";
 import { uploadImage } from "@/services/image-storage";
 import { CanvasDeleteProjectsDialog } from "./components/canvas-delete-projects-dialog";
+import { CanvasCreateCard } from "./components/canvas-project-create-card";
 import { CanvasProjectCard } from "./components/canvas-project-card";
 import type { CanvasExportFile } from "./export-types";
 import { useCanvasStore } from "./stores/use-canvas-store";
@@ -42,6 +44,11 @@ export default function CanvasPage() {
     const importProject = useCanvasStore((state) => state.importProject);
     const selectedIds = useCanvasUiStore((state) => state.selectedProjectIds);
     const setDeleteIds = useCanvasUiStore((state) => state.setDeleteProjectIds);
+    const removeSelectedIds = useCanvasUiStore((state) => state.removeSelectedProjectIds);
+    const searchProjects = useCanvasStore((state) => state.searchProjects);
+    const storedKeyword = useCanvasStore((state) => state.summaryKeyword);
+    const summaryBusy = useCanvasStore((state) => state.summaryBusy);
+    const [keyword, setKeyword] = useState(storedKeyword);
     const ready = Boolean(userId && hydrated && hydratedUserId === userId);
 
     const mode = searchParams.get("mode");
@@ -108,6 +115,13 @@ export default function CanvasPage() {
         void hydrate();
     }, [hydrate, userId]);
 
+    // 输入停顿 320ms 再查，避免每敲一个字打一次接口；store 里同词会直接短路
+    useEffect(() => {
+        if (!ready) return;
+        const timer = setTimeout(() => void searchProjects(keyword), 320);
+        return () => clearTimeout(timer);
+    }, [keyword, ready, searchProjects]);
+
     useEffect(() => {
         if (!ready || autoOpenRef.current || (mode !== "new" && mode !== "recent")) return;
         autoOpenRef.current = true;
@@ -126,29 +140,27 @@ export default function CanvasPage() {
     if (ready && (mode === "new" || mode === "recent")) return <main className="flex h-full items-center justify-center bg-background text-sm text-stone-500">正在打开画布...</main>;
 
     return (
-        <main className="h-full overflow-auto bg-background text-stone-950 dark:text-stone-100">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-2 py-2 sm:gap-6 sm:px-6 sm:py-8">
-                <header className="flex flex-wrap items-end justify-between gap-2.5 border-b border-border pb-3 sm:gap-4 sm:pb-5">
-                    <div>
-                        <p className="text-xs text-stone-500">画布库</p>
-                        <h1 className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">我的画布</h1>
+        <main className="h-full overflow-auto bg-background text-[var(--ink-1)]">
+            <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-3 py-4 sm:gap-6 sm:px-7 sm:py-7">
+                <header className="flex flex-wrap items-end justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-[12px] leading-4 text-[var(--ink-3)]">画布库</p>
+                        <h1 className="mt-1 truncate text-[20px] font-semibold leading-7 tracking-tight sm:text-[22px]">我的画布</h1>
                     </div>
-                    <div className="flex items-center gap-2">
-                        {selectedIds.length ? (
-                            <>
-                                <Button disabled={!ready} loading={exporting} icon={<Download className="size-4" />} onClick={() => void exportSelectedProjects()}>
-                                    导出选中
-                                </Button>
-                                <Button disabled={!ready} onClick={() => setDeleteIds(selectedIds)}>
-                                    删除选中
-                                </Button>
-                            </>
-                        ) : null}
-                        {projects.length ? (
-                            <Button disabled={!ready} onClick={() => setDeleteIds(projects.map((project) => project.id))}>
-                                删除当前页
-                            </Button>
-                        ) : null}
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                        {/* 用外层 div 控制宽度：antd 的 .ant-input-affix-wrapper 自带 width:100%，
+                            直接给 Input 写 w-[190px] 会被它按未分层规则压掉 */}
+                        <div className="hidden w-[190px] shrink-0 sm:block">
+                            <Input
+                                allowClear
+                                value={keyword}
+                                onChange={(event) => setKeyword(event.target.value)}
+                                prefix={<Search className="size-3.5 text-[var(--ink-3)]" />}
+                                placeholder="搜索画布"
+                                aria-label="搜索画布"
+                                className="w-full"
+                            />
+                        </div>
                         <Button disabled={!ready} icon={<FileUp className="size-4" />} onClick={() => inputRef.current?.click()}>
                             导入画布
                         </Button>
@@ -158,8 +170,24 @@ export default function CanvasPage() {
                     </div>
                 </header>
 
+                {selectedIds.length ? (
+                    <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[var(--surface-panel)] px-3 py-2 shadow-[0_1px_2px_rgba(17,17,19,0.05),0_8px_20px_-14px_rgba(17,17,19,0.25)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_20px_-14px_rgba(0,0,0,0.7)]">
+                        <span className="text-[12px] text-[var(--ink-2)]">已选 {selectedIds.length} 个画布</span>
+                        <span className="flex-1" />
+                        <Button size="small" loading={exporting} icon={<Download className="size-3.5" />} onClick={() => void exportSelectedProjects()}>
+                            导出
+                        </Button>
+                        <Button size="small" danger onClick={() => setDeleteIds(selectedIds)}>
+                            删除
+                        </Button>
+                        <Button size="small" type="text" onClick={() => removeSelectedIds(selectedIds)}>
+                            取消选择
+                        </Button>
+                    </div>
+                ) : null}
+
                 {!ready ? (
-                    <section className="flex min-h-24 flex-col items-center justify-center gap-3 border-y border-stone-200 px-4 text-center text-sm text-stone-500 sm:min-h-48 dark:border-stone-800">
+                    <section className="flex min-h-40 flex-col items-center justify-center gap-3 text-center text-sm text-[var(--ink-3)]">
                         <span>{syncError || "正在加载画布..."}</span>
                         {syncError ? (
                             <Button size="small" onClick={() => void hydrate(true)}>
@@ -167,27 +195,25 @@ export default function CanvasPage() {
                             </Button>
                         ) : null}
                     </section>
-                ) : projects.length ? (
+                ) : (
                     <>
-                        <div className="grid gap-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+                        <div className={cn("grid grid-cols-1 gap-x-3 gap-y-6 transition-opacity duration-200 sm:grid-cols-2 sm:gap-x-5 lg:grid-cols-3 xl:grid-cols-4", summaryBusy && "pointer-events-none opacity-50")}>
+                            <CanvasCreateCard onCreate={() => void createAndEnter()} loading={creating} />
                             {projects.map((project) => (
                                 <CanvasProjectCard key={project.id} project={project} />
                             ))}
                         </div>
+                        {!projects.length ? (
+                            <p className="pb-6 text-center text-[12px] text-[var(--ink-3)]">
+                                {keyword.trim() ? `没有找到包含「${keyword.trim()}」的画布` : "还没有画布，点上面的卡片开始搭第一个"}
+                            </p>
+                        ) : null}
                         {total > pageSize ? (
-                            <div className="flex justify-center py-2 sm:py-0">
+                            <div className="flex justify-center pb-2">
                                 <Pagination current={page} pageSize={pageSize} total={total} showSizeChanger={false} onChange={(nextPage) => void hydrate(true, nextPage)} />
                             </div>
                         ) : null}
                     </>
-                ) : (
-                    <section className="flex min-h-24 flex-col items-center justify-center border-y border-stone-200 px-3 py-5 text-center sm:min-h-56 sm:py-8 dark:border-stone-800">
-                        <h2 className="text-lg font-medium sm:text-xl">还没有画布</h2>
-                        <p className="mt-1.5 text-xs text-stone-500 sm:mt-3 sm:text-sm">新建一个画布后，就可以独立保存节点、连线和画布外观。</p>
-                        <Button type="primary" size="small" className="mt-3 sm:mt-5" loading={creating} icon={<Plus className="size-4" />} onClick={() => void createAndEnter()}>
-                            新建画布
-                        </Button>
-                    </section>
                 )}
             </div>
 

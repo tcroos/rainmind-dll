@@ -1,0 +1,452 @@
+/*
+ * 中性色阶（区域分割不画线，只靠同一灰色系的深浅差）。
+ * 参照即梦工作台：底色 / 侧栏 / 面板三级，外加两档更亮/更暗的浮起色。
+ *   浅色  #f8f9fa（底色） → #ffffff（侧栏） → #ffffff（面板） → #f4f5f6（内嵌）
+ *   深色  #121212          → #171717         → #1a1a1a          → #262626
+ * 底色从 #ededee 提到 #f8f9fa 是照即梦实测值取的：原来的 #ededee 比即梦深一档，
+ * 整页会读成「蒙了一层灰」，白卡片压在上面也没有浮起来的感觉。
+ */
+:root {
+    --surface-canvas: #f8f9fa;
+    --surface-rail: #ffffff;
+    --surface-panel: #ffffff;
+    --surface-soft: #f4f5f6;
+    --surface-inset: #eceef0;
+    --surface-hover: #e6e8eb;
+    /* 输入区卡面：不是纯白，左上角一小团极淡的品牌暖光渗进来（即梦的输入框里有一层 shader 光），
+     * 卡片因此看起来「有厚度」，而不是一张压在浅灰上的白纸。
+     * 范围压到 72%×110%：铺满整张卡的暖光会在深色态读成「发棕」。 */
+    --surface-panel-gradient:
+        radial-gradient(72% 110% at 6% -24%, rgba(226, 103, 31, 0.06) 0%, rgba(255, 255, 255, 0) 60%),
+        radial-gradient(70% 120% at 96% -10%, rgba(148, 163, 184, 0.16) 0%, rgba(255, 255, 255, 0) 66%),
+        linear-gradient(180deg, #ffffff 0%, #fdfdff 100%);
+    --hairline: rgba(17, 17, 19, 0.07);
+    --ink-1: #18181b;
+    --ink-2: #5b5b64;
+    --ink-3: #8c8c95;
+    /*
+     * 主题色：和营销页 / 登录页同一支橙（营销页大标题与 CTA 用的就是 #e2671f）。
+     * 工作台平时是黑白灰，只有表达「动作 / 选中 / 强调」的地方才取用这一支，
+     * 且只用一个色相 —— 之前是黑灰 + 紫、黑灰 + 靛蓝各说各话，整页看着脏。
+     */
+    --brand-500: #e2671f;
+    --brand-600: #c95616;
+    --brand-700: #a9520c;
+    --brand-soft: rgba(226, 103, 31, 0.1);
+    --brand-line: rgba(226, 103, 31, 0.26);
+    --brand-glow: rgba(226, 103, 31, 0.16);
+    /* 右侧消息中心是「浮」在页面上的一张卡片：上边避开顶部的渐变通知栏并留一段空隙，
+     * 右边、底边也各留一口气，不再是从窗口顶贴到底的一整条。 */
+    --announcement-drawer-mask: rgba(17, 20, 28, 0.06);
+    /* 36px 渐变公告条 + 64px 页头 + 16px 呼吸：面板顶边落在页头下沿之下，
+     * 既不盖住顶部通知栏和页头右侧图标，也和通知栏拉开一段可见的距离。 */
+    --announcement-drawer-top: 116px;
+    --announcement-drawer-right: 16px;
+    --announcement-drawer-bottom: 32px;
+    /* 宽度收窄：原来 400/380 的面板配 752px 的高度，读起来是一整块「厚板」。
+     * 340px 更像即梦那种轻盈的消息侧栏；两个抽屉共用这一个令牌，改一处即可。 */
+    --announcement-drawer-width: 340px;
+    /* 弹出手感：比 antd 默认的 0.3s 更快，用 easeOutExpo 收尾 */
+    --announcement-drawer-duration: 220ms;
+    --announcement-drawer-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 用户关掉顶部横幅后，页头整体上移 36px（横幅高度）；抽屉顶边跟着抬，
+ * 不然页头和面板之间会空出一大截。只由「有公告且被关掉」这条路径打标。 */
+html.announcement-bar-dismissed {
+    --announcement-drawer-top: 80px;
+}
+
+.dark {
+    --surface-canvas: #121212;
+    --surface-rail: #171717;
+    --surface-panel: #1a1a1a;
+    --surface-soft: #1f1f1f;
+    --surface-inset: #262626;
+    --surface-hover: #2c2c2c;
+    --surface-panel-gradient:
+        radial-gradient(72% 110% at 6% -24%, rgba(240, 128, 58, 0.045) 0%, rgba(28, 28, 28, 0) 60%),
+        radial-gradient(70% 120% at 96% -10%, rgba(96, 122, 152, 0.18) 0%, rgba(28, 28, 28, 0) 66%),
+        linear-gradient(180deg, #1c1c1c 0%, #232323 100%);
+    --hairline: rgba(255, 255, 255, 0.07);
+    --ink-1: #f4f4f5;
+    --ink-2: #a1a1aa;
+    --ink-3: #71717a;
+    /* 深色态沿同一色相把明度抬上去：橙在黑底上会「发闷」，浅一档才看得见 */
+    --brand-500: #f0803a;
+    --brand-600: #ff9448;
+    --brand-700: #ffab6b;
+    --brand-soft: rgba(240, 128, 58, 0.14);
+    --brand-line: rgba(240, 128, 58, 0.32);
+    --brand-glow: rgba(240, 128, 58, 0.22);
+    --announcement-drawer-mask: rgba(0, 0, 0, 0.3);
+}
+
+@layer utilities {
+    /* 面板统一质感：不描边，靠一层极浅的落影 + 内描边把边界托出来。
+     * 底色提到 #f8f9fa 之后，白卡片和底的明度只差 7/255，
+     * 只靠原来的落影会「糊」在一起，所以补一圈 4% 的内描边当边线用 —— 
+     * 即梦也是这么做的：卡片不看边框线，只有一个几乎看不见的轮廓。 */
+    .surface-panel {
+        background-color: var(--surface-panel);
+        box-shadow:
+            inset 0 0 0 1px rgba(17, 17, 19, 0.045),
+            0 1px 2px rgba(17, 17, 19, 0.04),
+            0 12px 32px -18px rgba(17, 17, 19, 0.22);
+    }
+
+    .dark .surface-panel {
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+}
+
+/*
+ * 顶部公告条：细窄的品牌渐变带 + 逐条「停留 → 上滑」的竖向轮播。
+ * 渐变照即梦顶部那条：左端品牌橙、中间化开成近白、右端收成青蓝，
+ * 只用橙与冷蓝两端、中间留白，所以有颜色但不花。深色态沿同一色相压暗，
+ * 保证浅色文字仍然读得清。
+ * 整条是一个链接，两端不再摆「公告」标和「查看全部」；点任意位置都去公告中心。
+ * keyframes 由组件按公告条数动态生成（末尾接一份第一条副本，滚到底无缝回到起点）。
+ */
+.announcement-marquee {
+    color: var(--ink-1);
+    background-image: linear-gradient(90deg, #f5823c 0%, #ffd9bd 32%, #e6f4f9 62%, #66b9dc 100%);
+    border-bottom: 1px solid rgba(226, 103, 31, 0.16);
+    text-decoration: none;
+    transition: filter 0.18s ease;
+}
+
+.announcement-marquee:hover,
+.announcement-marquee:focus-visible {
+    filter: saturate(1.08) brightness(1.02);
+    text-decoration: none;
+}
+
+.dark .announcement-marquee {
+    background-image: linear-gradient(90deg, #8c3f18 0%, #6d4a3a 34%, #244a5c 70%, #1d6d8c 100%);
+    border-bottom-color: rgba(240, 128, 58, 0.22);
+}
+
+@layer utilities {
+    /* 一行 36px：字号放大后仍留得住上下呼吸，竖向切换靠轨道整体 translateY */
+    .announcement-marquee-viewport {
+        height: 36px;
+    }
+
+    .announcement-marquee-track {
+        display: flex;
+        flex-direction: column;
+        will-change: transform;
+    }
+
+    .announcement-marquee-track--rotating {
+        /* 停留段前后值相同，缓动只作用在切换那一小段，进出都更顺 */
+        animation: announcement-vertical-scroll var(--announcement-duration, 18s) ease-in-out infinite;
+    }
+
+    /* 每条独占一行、内容整体居中：高度必须和组件里 ITEM_HEIGHT（36）一致，
+     * 否则 keyframes 的位移步长会对不齐，切换时会露出半行字。
+     * 字号从 12px 提到 14px —— 渐变带上的小字太难读，是这轮的主要反馈。
+     * 前面是几枚模板小方块（不是圆点），和文字、箭头一起随整行切换。 */
+    .announcement-marquee-item {
+        display: flex;
+        height: 36px;
+        flex: 0 0 36px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        overflow: hidden;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .announcement-marquee:hover .announcement-marquee-track,
+    .announcement-marquee:focus-within .announcement-marquee-track {
+        animation-play-state: paused;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .announcement-marquee-track--rotating {
+            animation: none;
+        }
+    }
+
+    @media (max-width: 640px) {
+        /* 窄屏文字会铺满整行，左右各留一点：右端的 × 才不会贴着省略号，
+         * 对称留白也不会把这一行推偏，仍然相对整条横幅居中。 */
+        .announcement-marquee-viewport {
+            padding-inline: 22px;
+        }
+    }
+}
+
+/*
+ * 文字前的「模板小方块」：即梦那条横幅就是用几枚白底圆角块做前缀。
+ * 它们挂在轨道的每一行里，所以会连同文字一起上下切换，而不是钉在两端不动。
+ * 方块改成半透明玻璃（内高光 + 细边），符号统一成一套抽象几何、一套色，
+ * 不再堆四五个不同颜色的默认线性图标 —— 那正是「原皮感」的来源。
+ */
+.announcement-marquee-chips {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 3px;
+}
+
+.announcement-marquee-chip {
+    display: grid;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 255, 255, 0.74) 100%);
+    color: var(--brand-600);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 2px 6px -3px rgba(17, 17, 19, 0.38);
+}
+
+/* 冷色调那一套模板：和渐变右端的青蓝呼应，轮播时两套交替出现 */
+.announcement-marquee-chips--cool .announcement-marquee-chip {
+    color: #1d6d8c;
+}
+
+/* 深色带上白块要稍微透出底色，纯黑块会读成三个洞 */
+.dark .announcement-marquee-chip {
+    border-color: rgba(255, 255, 255, 0.16);
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
+    color: var(--brand-600);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.dark .announcement-marquee-chips--cool .announcement-marquee-chip {
+    color: #8fd3ee;
+}
+
+/* 消息列表 / 公告弹窗的圆形徽记：渐变玻璃底 + 内高光，星芒自带品牌橙→青蓝渐变 */
+.announcement-glyph-chip {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 999px;
+}
+
+.announcement-glyph-chip--brand {
+    background-image: linear-gradient(150deg, #fff6ed 0%, #ffe4d0 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 0 0 1px rgba(226, 103, 31, 0.12),
+        0 3px 10px -6px rgba(226, 103, 31, 0.6);
+}
+
+.announcement-glyph-chip--cool {
+    background-image: linear-gradient(150deg, #f0f8fd 0%, #dcecf7 100%);
+    color: #3b82c4;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 0 0 1px rgba(59, 130, 196, 0.12);
+}
+
+.announcement-glyph-chip--muted {
+    background-image: linear-gradient(150deg, #f5f7fa 0%, #eceff3 100%);
+    color: #98a2ae;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 0 0 1px rgba(17, 20, 28, 0.05);
+}
+
+.announcement-glyph-chip--muted svg {
+    opacity: 0.55;
+}
+
+.dark .announcement-glyph-chip--brand {
+    background-image: linear-gradient(150deg, #3a2a20 0%, #2a211c 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 0 0 1px rgba(240, 128, 58, 0.18);
+}
+
+.dark .announcement-glyph-chip--cool {
+    background-image: linear-gradient(150deg, #1e3448 0%, #182733 100%);
+    color: #8fc8f5;
+    box-shadow: inset 0 0 0 1px rgba(143, 200, 245, 0.16);
+}
+
+.dark .announcement-glyph-chip--muted {
+    background-image: linear-gradient(150deg, #252a31 0%, #1e2228 100%);
+    color: #8a939f;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.announcement-marquee-arrow {
+    flex-shrink: 0;
+    opacity: 0.62;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.announcement-marquee:hover .announcement-marquee-arrow {
+    opacity: 0.9;
+    transform: translateX(2px);
+}
+
+/*
+ * 右端的关闭键：一枚细小的白色 ×，绝对定位盖在链接之上（不是嵌在 <a> 里，
+ * 避免 button-in-link 的非法嵌套）。不占 flex 空间，所以中间那行字仍然是
+ * 相对整条横幅居中，不会被挤到左边。渐变右端是青蓝，纯白细线配一层极淡的
+ * 深色投影才读得清；hover 时才浮出一点点圆形底，平时几乎看不见。
+ */
+.announcement-marquee-close {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    z-index: 1;
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #fff;
+    opacity: 0.82;
+    transform: translateY(-50%);
+    cursor: pointer;
+    transition: opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.announcement-marquee-close svg {
+    width: 13px;
+    height: 13px;
+    /* 在浅青蓝那一端给细白线垫一点深色，不要加粗笔画 */
+    filter: drop-shadow(0 1px 1px rgba(20, 52, 72, 0.5));
+}
+
+.announcement-marquee-close:hover,
+.announcement-marquee-close:focus-visible {
+    opacity: 1;
+    background-color: rgba(17, 20, 28, 0.12);
+    outline: none;
+}
+
+@media (max-width: 640px) {
+    .announcement-marquee-close {
+        right: 5px;
+    }
+}
+
+/*
+ * 消息中心 / 站点公告：右侧的一张「浮层卡片」，不是顶天立地的一竖条。
+ * 即梦那条的面板上边避开顶部渐变通知栏、还留一段空隙，右边与底边同样留白，
+ * 四个角都是圆角，所以读起来是浮在页面上的卡片，而不是把整屏切掉一块。
+ * antd Drawer 默认 top/right/bottom:0 + height:100%，而且它的 CSS-in-JS 注入在
+ * 全局样式之后、选择器特异性相同，所以这四个必须带 !important 才压得住；
+ * height:auto 让 top/bottom 自己拉伸出实际高度，不再写死 100%。
+ * 两个抽屉共用同一 rootClassName，改这里就一起生效。
+ */
+.announcement-drawer .ant-drawer-mask {
+    background: var(--announcement-drawer-mask) !important;
+}
+
+.announcement-drawer .ant-drawer-content-wrapper {
+    top: var(--announcement-drawer-top) !important;
+    right: var(--announcement-drawer-right) !important;
+    bottom: var(--announcement-drawer-bottom) !important;
+    height: auto !important;
+    border-radius: 16px;
+    box-shadow:
+        0 24px 56px -20px rgba(17, 20, 28, 0.36),
+        0 2px 10px -4px rgba(17, 20, 28, 0.16);
+}
+
+.dark .announcement-drawer .ant-drawer-content-wrapper {
+    box-shadow:
+        0 24px 56px -18px rgba(0, 0, 0, 0.78),
+        0 2px 10px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* 窄屏留白收紧，别让面板矮得装不下标题 + tab + 列表；宽度也扣掉两侧留白 */
+@media (max-width: 640px) {
+    .announcement-drawer .ant-drawer-content-wrapper {
+        top: 48px !important;
+        right: 10px !important;
+        bottom: 12px !important;
+        width: calc(100vw - 20px) !important;
+        border-radius: 14px;
+    }
+}
+
+/*
+ * 弹出手感：antd 默认是 transition: all 0.3s + 默认 ease —— 又慢又「黏」，
+ * 而且 all 会把圆角、阴影也一起插值。这里只过渡 transform / opacity，
+ * 220ms 配 easeOutExpo，起步快、收尾轻；面板内容再补一层极轻的上浮淡入，
+ * 和抽屉位移错开一点点，整体滑入才读得顺。
+ */
+.announcement-drawer .ant-drawer-content-wrapper {
+    transition:
+        transform var(--announcement-drawer-duration) var(--announcement-drawer-ease),
+        opacity var(--announcement-drawer-duration) var(--announcement-drawer-ease) !important;
+    will-change: transform;
+}
+
+.announcement-drawer .ant-drawer-mask {
+    transition: opacity var(--announcement-drawer-duration) ease !important;
+    animation-duration: var(--announcement-drawer-duration) !important;
+}
+
+/* 不接管 antd 的 motion 类：CSSMotion 自己管 transform 的起点/终点，
+ * 我们只改过渡时长与曲线。额外叠一层 keyframes 会和它抢 transform，
+ * 动画会随机冻结在半路。 */
+@keyframes announcement-panel-reveal {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 8px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+/* 绑定打开态：面板 forceRender 常驻，每次加上 .ant-drawer-open 才重播淡入 */
+.announcement-drawer.ant-drawer-open .ant-drawer-body > section {
+    animation: announcement-panel-reveal 220ms var(--announcement-drawer-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .announcement-drawer .ant-drawer-content-wrapper,
+    .announcement-drawer .ant-drawer-mask {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+
+    .announcement-drawer.ant-drawer-open .ant-drawer-body > section {
+        animation: none;
+    }
+}
+
+
+/* ── 工作台侧栏的链接色 ───────────────────────────────────────────────
+ * antd 给所有 <a> 注入无层级的 color:var(--ant-color-link)，会压过
+ * @layer utilities 里的 text-[var(--ink-*)]。浅色态那个值是 #171717，
+ * 看着还正常；深色态侧栏底色恰好也是 #171717 —— 整排菜单文字隐形，
+ * 只剩图标。所以必须放在 @layer 之外，按侧栏自己的 ink 令牌重新指定。
+ */
+.workspace-shell aside a {
+    color: var(--ink-2);
+}
+
+.workspace-shell aside a:hover,
+.workspace-shell aside a[aria-current="page"],
+.workspace-shell aside > a {
+    color: var(--ink-1);
+}

@@ -733,11 +733,6 @@
         }
 
 
-        .auth-page-card {
-            border-radius: 14px;
-            padding: 28px 22px 24px;
-        }
-
         /* 只收窄整页登录卡里的表单内边距，别再影响首屏登录弹窗 */
         .auth-page-card .auth-panel {
             min-height: auto;
@@ -789,10 +784,6 @@
         .landing-feature-icon {
             height: 38px;
             width: 38px;
-        }
-
-        .auth-page-bg {
-            align-items: flex-start;
         }
     }
 

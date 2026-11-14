@@ -306,7 +306,7 @@ export function CreativeGenerationPreferences({
                 aria-haspopup="menu"
                 aria-expanded={open}
             >
-                <span className={cn("max-w-[132px] truncate text-xs font-medium sm:max-w-[176px]", triggerLabelClassName)}>{summary}</span>
+                <span className={cn("max-w-[132px] truncate text-[13px] font-medium sm:max-w-[176px]", triggerLabelClassName)}>{summary}</span>
                 <ChevronDown className="size-3.5 shrink-0" />
             </Button>
         </Popover>

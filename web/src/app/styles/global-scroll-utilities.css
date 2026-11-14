@@ -4,6 +4,14 @@
         scrollbar-width: none;
     }
 
+    /* 窄屏横向滚动的工具条：右缘淡出，暗示"还有内容"，避免硬切一刀。 */
+    @media (max-width: 639px) {
+        .scroll-fade-x {
+            mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+            -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+        }
+    }
+
     .hide-scrollbar::-webkit-scrollbar {
         display: none;
     }

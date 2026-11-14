@@ -1,7 +1,7 @@
 "use client";
 
 import { Drawer } from "antd";
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, Globe } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -49,7 +49,7 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
         >
             {navigationGroups.map((group, groupIndex) => (
                 <div key={group.id} className={cn(groupIndex > 0 && "mt-5")}>
-                    <div className="mb-1 px-3 text-[11px] font-medium text-[#9aa2ad] dark:text-[#737d89]">{group.label}</div>
+                    <div className="mb-1 px-3 text-[13px] font-medium text-[#9aa2ad] dark:text-[#737d89]">{group.label}</div>
                     <div className="space-y-1">
                         {navigationTools
                             .filter((tool) => tool.group === group.id)
@@ -65,14 +65,14 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
                                         onFocus={() => router.prefetch(`/${tool.slug}`)}
                                         onClick={onClose}
                                         className={cn(
-                                            "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition",
+                                            "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-base transition",
                                             active
                                                 ? "bg-[#f0f2f4] font-medium text-[#1d2127] dark:bg-[#22262c] dark:text-[#f3f5f7]"
                                                 : "text-[#697381] hover:bg-[#f3f5f7] hover:text-[#20242a] dark:text-[#9aa3af] dark:hover:bg-[#20242a] dark:hover:text-[#f3f5f7]",
                                         )}
                                         aria-current={active ? "page" : undefined}
                                     >
-                                        <Icon className="size-[18px] shrink-0" />
+                                        <Icon className="size-5 shrink-0" />
                                         <span className="min-w-0 flex-1 truncate">{tool.label}</span>
                                         <span className={cn("size-1.5 rounded-full", active ? "bg-current" : "bg-transparent")} />
                                     </Link>
@@ -83,18 +83,30 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
             ))}
             <div className="mt-5 border-t border-border pt-4">
                 <Link
+                    href="/"
+                    prefetch
+                    onMouseEnter={() => router.prefetch("/")}
+                    onFocus={() => router.prefetch("/")}
+                    onClick={onClose}
+                    className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-base text-[#697381] transition hover:bg-[#f3f5f7] hover:text-[#20242a] dark:text-[#9aa3af] dark:hover:bg-[#20242a] dark:hover:text-[#f3f5f7]"
+                >
+                    <Globe className="size-5 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">官网首页</span>
+                    <span className="size-1.5 rounded-full bg-transparent" />
+                </Link>
+                <Link
                     href="/help"
                     prefetch
                     onMouseEnter={() => router.prefetch("/help")}
                     onFocus={() => router.prefetch("/help")}
                     onClick={onClose}
                     className={cn(
-                        "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition",
+                        "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-base transition",
                         helpActive ? "bg-[#f0f2f4] font-medium text-[#1d2127] dark:bg-[#22262c] dark:text-[#f3f5f7]" : "text-[#697381] hover:bg-[#f3f5f7] hover:text-[#20242a] dark:text-[#9aa3af] dark:hover:bg-[#20242a] dark:hover:text-[#f3f5f7]",
                     )}
                     aria-current={helpActive ? "page" : undefined}
                 >
-                    <CircleHelp className="size-[18px] shrink-0" />
+                    <CircleHelp className="size-5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">帮助</span>
                     <span className={cn("size-1.5 rounded-full", helpActive ? "bg-current" : "bg-transparent")} />
                 </Link>

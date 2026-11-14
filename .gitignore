@@ -37,4 +37,7 @@ scripts/capture-readme-screenshots.mjs
 # 本地截图与工作记录，不入库
 web/.shots/
 .workbuddy/
+# 本地调试用的嵌入式 PostgreSQL（二进制 + 数据目录）
+.devtools/
+.pgdata/
 mock-megick-api.local.cjs

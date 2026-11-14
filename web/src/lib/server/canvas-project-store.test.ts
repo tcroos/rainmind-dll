@@ -172,16 +172,42 @@ describe("canvas project file provider", () => {
                     total_count: 21,
                     created_at: "2026-07-20T00:00:00.000Z",
                     updated_at: "2026-07-22T00:00:00.000Z",
+                    previews: [
+                        { kind: "image", url: "https://cdn.example.com/a.png" },
+                        { kind: "image", url: "data:image/png;base64,AAAA" },
+                        { kind: "video", url: "https://cdn.example.com/b.mp4" },
+                        { kind: "image", url: "https://cdn.example.com/a.png" },
+                    ],
                 },
             ],
         });
 
-        await expect(listCanvasProjectSummaries("user-one", { page: 2, pageSize: 12 })).resolves.toMatchObject({ projects: [{ id: "canvas-one", nodeCount: 8, connectionCount: 3 }], total: 21, page: 2, pageSize: 12 });
+        await expect(listCanvasProjectSummaries("user-one", { page: 2, pageSize: 12 })).resolves.toMatchObject({
+            projects: [
+                {
+                    id: "canvas-one",
+                    nodeCount: 8,
+                    connectionCount: 3,
+                    // data URI 和内联内容不进封面，重复 URL 只留一份
+                    previews: [
+                        { kind: "image", url: "https://cdn.example.com/a.png" },
+                        { kind: "video", url: "https://cdn.example.com/b.mp4" },
+                    ],
+                },
+            ],
+            total: 21,
+            page: 2,
+            pageSize: 12,
+        });
         const [statement, params] = mocks.postgresQuery.mock.calls[0] as [string, unknown[]];
         expect(statement).toContain("jsonb_array_length");
         expect(statement).not.toMatch(/SELECT\s+project_json\s+FROM/i);
         expect(statement).toContain("LIMIT $2 OFFSET $3");
-        expect(params).toEqual(["user-one", 12, 12]);
+        // 封面聚合必须读分页后的 page_projects，而不是在 filtered 上整表展开 jsonb
+        expect(statement).toMatch(/jsonb_array_elements\([^)]*page_projects\.project_json/);
+        expect(statement).toContain(") page_projects");
+        expect(statement).toContain("strpos(lower(title)");
+        expect(params).toEqual(["user-one", 12, 12, "", 4]);
     });
 
     it("paginates complete PostgreSQL Canvas snapshots for explicit user export", async () => {

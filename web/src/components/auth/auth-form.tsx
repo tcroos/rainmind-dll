@@ -6,7 +6,9 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Gift, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { App, Button, Checkbox, Input } from "antd";
 
+import { AuthShowcaseVideo } from "@/components/auth/auth-showcase-video";
 import { SiteLogo } from "@/components/layout/site-logo";
+import { clearAnnouncementDismissState } from "@/lib/announcement-dismiss";
 import { DEFAULT_SITE_TITLE } from "@/lib/site-brand";
 import { usePublicSessionStore } from "@/stores/use-public-session-store";
 import { type LocalUser, useUserStore } from "@/stores/use-user-store";
@@ -100,6 +102,9 @@ export function AuthForm({
             } else {
                 message.success(isRegister ? "注册成功" : "登录成功");
             }
+            /* 每次登录都重新展示公告（含换账号登录）：关闭状态只活在当前标签页，
+             * 不清掉的话 window.location.replace 之后仍会读到上一账号的关闭标记。 */
+            clearAnnouncementDismissState();
             window.location.replace(nextPath);
         } catch (error) {
             message.error(error instanceof Error ? error.message : isRegister ? "注册失败" : "登录失败");
@@ -130,10 +135,12 @@ export function AuthForm({
         <section className={cn("auth-panel flex min-h-full items-center", variant === "embedded" ? "p-6 sm:p-7" : "p-8 sm:p-10", className)}>
             <form onSubmit={submit} className={cn("auth-form-body w-full", variant === "embedded" ? "space-y-4" : "space-y-6")}>
                 {headerSlot}
+                {/* 标准登录页表头：品牌名做主标题，下面一句说明用途的提示语。
+                    旧副标题是一串功能罗列的营销文案，摆在登录框里不像提示语。 */}
                 <div className="auth-form-header">
                     <p className="auth-form-kicker text-sm font-medium">{firstUser ? "首次初始化" : isRegister ? "创建创作账号" : "欢迎回来"}</p>
-                    <h2 className={cn("mt-2 font-semibold tracking-normal text-stone-950 dark:text-white", variant === "embedded" ? "text-2xl" : "text-3xl")}>{firstUser ? "创建首个管理员" : isRegister ? "创建账号" : "登录"}</h2>
-                    <p className="auth-form-description mt-2.5 text-sm leading-6 text-stone-500 dark:text-stone-400">{isRegister ? "保存项目、提示词与常用风格。" : "继续你的电商、短剧、美颜与画布创作。"}</p>
+                    <h2 className={cn("mt-2 font-semibold tracking-normal text-stone-950 dark:text-white", variant === "embedded" ? "text-2xl" : "text-3xl")}>{firstUser ? "创建首个管理员" : isRegister ? `注册 ${site.title}` : `登录 ${site.title}`}</h2>
+                    <p className="auth-form-description mt-2.5 text-sm leading-6 text-stone-500 dark:text-stone-400">{isRegister ? "创建账号后即可开始创作，并保存项目与常用风格。" : "欢迎回来，请输入账号信息以继续。"}</p>
                 </div>
 
                 {authError ? <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-100">{authError}</div> : null}
@@ -335,20 +342,26 @@ export function AuthForm({
     if (variant === "embedded") return form;
 
     return (
-        <main className="auth-page-bg app-scroll-page flex items-center justify-center px-4 py-8 text-foreground sm:px-6 sm:py-12">
+        /* 满屏左右分栏：左视频 / 右表单，不再是一张浮在灰底上的居中卡片 */
+        <main className="auth-page-bg app-scroll-page text-foreground">
             <div className="auth-page-shell">
                 <div className="auth-page-card">
-                    {/* 和首屏登录弹窗同一套语言：Logo → 标题 → 一句说明 → 表单，单列窄卡，
-                        右侧不再堆品牌介绍与三条卖点 */}
-                    <Link href="/" aria-label={site.title} className="auth-page-logo-link">
-                        <SiteLogo logoUrl={site.logoUrl} className="auth-page-logo" />
-                    </Link>
-                    {form}
+                    {/* 左栏视频铺满（object-fit cover），右栏表单居中：
+                        视频必须是卡片的第一个子节点，表单在它后面 */}
+                    <AuthShowcaseVideo />
+                    <div className="auth-page-card-content">
+                        <Link href="/" className="auth-page-back">
+                            <ArrowLeft className="size-4" />
+                            <span>返回首页</span>
+                        </Link>
+                        <div className="auth-page-card-inner">
+                            <Link href="/" aria-label={site.title} className="auth-page-logo-link">
+                                <SiteLogo logoUrl={site.logoUrl} className="auth-page-logo" />
+                            </Link>
+                            {form}
+                        </div>
+                    </div>
                 </div>
-                <Link href="/" className="auth-page-back">
-                    <ArrowLeft className="size-4" />
-                    <span>返回首页</span>
-                </Link>
             </div>
         </main>
     );

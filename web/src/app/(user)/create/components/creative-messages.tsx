@@ -168,7 +168,7 @@ export function CreativeMessages({
                                     className={cn(
                                         "break-words text-[15px] leading-7",
                                         item.role === "user" &&
-                                            "rounded-[14px] bg-[linear-gradient(135deg,#f3f1ff_0%,#ebeaff_100%)] px-[18px] py-3 text-left leading-6 text-[#111827] dark:bg-[linear-gradient(135deg,#2d2a46_0%,#26243a_100%)] dark:text-[#f3f5f7]",
+                                            "rounded-[14px] bg-[linear-gradient(135deg,#f4f5f6_0%,#eceef1_100%)] px-[18px] py-3 text-left leading-6 text-[#111827] dark:bg-[linear-gradient(135deg,#262626_0%,#1e1e1f_100%)] dark:text-[#f3f5f7]",
                                         item.status === "failed" && "text-red-600 dark:text-red-300",
                                         item.status === "cancelled" && "text-stone-400",
                                     )}
@@ -251,7 +251,7 @@ function CreativeMediaRound({
                     <div className="flex items-start justify-end gap-3">
                         <div className="min-w-0 max-w-[520px]">
                             {referencedAssets.length ? <CreativeRoundReferenceStrip assets={referencedAssets} /> : null}
-                            <p className="whitespace-pre-wrap break-words rounded-[14px] bg-[linear-gradient(135deg,#f3f1ff_0%,#ebeaff_100%)] px-[18px] py-3 text-left text-[15px] leading-6 text-[#111827] dark:bg-[linear-gradient(135deg,#2d2a46_0%,#26243a_100%)] dark:text-[#f3f5f7]">
+                            <p className="whitespace-pre-wrap break-words rounded-[14px] bg-[linear-gradient(135deg,#f4f5f6_0%,#eceef1_100%)] px-[18px] py-3 text-left text-[15px] leading-6 text-[#111827] dark:bg-[linear-gradient(135deg,#262626_0%,#1e1e1f_100%)] dark:text-[#f3f5f7]">
                                 {userMessage.content}
                             </p>
                             <CreativeUserMessageMeta message={userMessage} />

@@ -14,6 +14,9 @@ export function ClientRootInit({ children }: { children: ReactNode }) {
     const { message } = App.useApp();
     const pathname = usePathname();
     const installRoute = pathname === "/install";
+    /* 营销页是给访客看产品的，不自动弹任何公告抽屉；公告入口留在页头和公告中心，
+     * 由用户自己点开。登录后回到工作台才允许按「登录后弹窗」配置提醒。 */
+    const marketingPage = pathname === "/";
     const setConfig = useConfigStore((state) => state.setConfig);
     const setUser = useUserStore((state) => state.setUser);
 
@@ -54,7 +57,7 @@ export function ClientRootInit({ children }: { children: ReactNode }) {
     return (
         <>
             {children}
-            {installRoute ? null : <SiteAnnouncementPopup />}
+            {installRoute || marketingPage ? null : <SiteAnnouncementPopup />}
         </>
     );
 }

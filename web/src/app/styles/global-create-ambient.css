@@ -1,0 +1,107 @@
+/*
+ * 创作页（/create）的环境光背景。
+ *
+ * 参照即梦 AI 工具首页：光只从「标题 + 输入框」那一带照下来，越往下越沉，
+ * 底部是干净的一片暗，没有任何贴着窗口边缘的光斑。即梦从来没有在页面四角
+ * 摆光团 —— 四角摆光团会出现两个问题：
+ *   ① 百分比定位的光斑是相对「窗口」的，滚动时钉在视口底边，悬在空白处像块脏雾；
+ *   ② 窗口宽窄一变，光斑就跟着胀缩，落点完全不可预期。
+ * 所以这里改成：所有光都用固定 px 尺寸、统一锚在顶部内容区之外（负 y），
+ * 底部只留一层均匀的竖向渐变。视觉锚点是「界面」，不是「窗口」。
+ *
+ * 颜色上仍是黑白灰为主：顶部光池左缘一抹品牌暖（≤7%）、右缘一抹冷雾（≤10%），
+ * 形成很轻的冷暖方向；竖向渐变从偏暖的近白走到偏冷的浅灰蓝。
+ * 主题橙真正出场的地方是控件（发送键、技能图标、选中态），不是背景。
+ *
+ * 这一层挂在外壳（workspace-shell）上、z-index:-1：外壳有 isolate，
+ * 背景正好落在「底色之上、页头/侧栏/内容之下」，页头下沿不会留一道横缝。
+ */
+
+.create-ambient {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background-color: var(--surface-canvas);
+    background-image:
+        /* ① 顶部中央光池：中心压在内容区上沿之外，光正好落到标题和输入区，
+         * 用 px 定尺寸，不随窗口宽度胀缩。 */
+        radial-gradient(920px 430px at 50% -70px, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 72%),
+        /* ② 光池左缘一抹品牌暖光：整页唯一的有彩色光，只到 7%，且只在顶部 */
+        radial-gradient(520px 300px at 22% -90px, rgba(226, 103, 31, 0.07) 0%, rgba(226, 103, 31, 0) 72%),
+        /* ③ 光池右缘一抹冷雾，和暖光对冲出方向，同样只落在顶部 */
+        radial-gradient(560px 330px at 82% -110px, rgba(148, 163, 184, 0.1) 0%, rgba(148, 163, 184, 0) 74%),
+        /* ④ 竖向大渐变：上亮下沉、从暖白走到冷灰蓝；底部干净收住，不放角落光斑 */
+        linear-gradient(180deg, #fefbf8 0%, #f5f7fa 45%, #e8ecf2 100%);
+}
+
+/* 四周暗角：只在边缘起作用，中心完全透明，不影响卡片对比度 */
+.create-ambient::before {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    background: radial-gradient(72% 62% at 50% 26%, rgba(16, 20, 28, 0) 54%, rgba(16, 20, 28, 0.045) 100%);
+    animation: create-ambient-breathe 34s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+}
+
+/* 胶片颗粒：一层 160×160 的噪声平铺，压到 3.5%，只负责「不塑料」 */
+.create-ambient::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 160px 160px;
+    mix-blend-mode: multiply;
+    opacity: 0.035;
+}
+
+/*
+ * 点阵只属于上半屏（标题 / 输入区），往下柔和淡出。
+ * 没有这层蒙版，整屏静止点会在内容区里读出一块边界生硬的「亮矩形」，
+ * 波纹半径一大更是变成压在卡片上的一块大圆斑 —— 即梦的点阵也只集中在 hero 区。
+ * 用渐变淡出而不是裁切，才不会出现直角边。
+ */
+.create-dot-field {
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 22%, rgba(0, 0, 0, 0.5) 46%, transparent 74%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 22%, rgba(0, 0, 0, 0.5) 46%, transparent 74%);
+}
+
+@keyframes create-ambient-breathe {
+    from {
+        opacity: 0.85;
+        transform: scale(1);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1.04);
+    }
+}
+
+/* 深色态：即梦的做法是 #121212 打底 + 顶部一束冷光，底部纯黑。
+ * 保持同样的「黑而不死」，但左下角不再有暖橙光团。 */
+.dark .create-ambient {
+    background-image:
+        radial-gradient(920px 430px at 50% -70px, rgba(120, 146, 180, 0.2) 0%, rgba(120, 146, 180, 0) 70%),
+        /* 深色态的品牌暖光略亮一档，但仍只在顶部光池边缘 */
+        radial-gradient(520px 300px at 22% -90px, rgba(240, 128, 58, 0.09) 0%, rgba(240, 128, 58, 0) 72%),
+        radial-gradient(560px 330px at 82% -110px, rgba(86, 118, 158, 0.13) 0%, rgba(86, 118, 158, 0) 74%),
+        linear-gradient(180deg, #191c21 0%, #141619 48%, #0d0e10 100%);
+}
+
+.dark .create-ambient::before {
+    background: radial-gradient(72% 62% at 50% 26%, rgba(0, 0, 0, 0) 52%, rgba(0, 0, 0, 0.34) 100%);
+}
+
+.dark .create-ambient::after {
+    mix-blend-mode: screen;
+    opacity: 0.028;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .create-ambient::before {
+        animation: none;
+    }
+}
