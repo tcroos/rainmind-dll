@@ -28,14 +28,35 @@ describe("marketing page login flow", () => {
         expect(actions).toContain("openProtectedPath(`/billing/checkout?product=${encodeURIComponent(product.id)}`)");
     });
 
-    it("labels the header action as 登录 when signed out and 开始创作 when signed in", async () => {
+    it("keeps one solid CTA and two account entries without the brand mark", async () => {
         const header = await read("src/app/home/home-header.tsx");
 
-        expect(header).toContain('onClick={() => openProtectedPath("/create")}');
-        expect(header).toContain('{authenticated ? "开始创作" : "登录"}');
+        // 品牌区只剩字标，不再渲染 ∞ 图标
+        expect(header).not.toContain("<SiteLogo");
+        expect(header).not.toContain("site.logoUrl");
+        // 未登录：文字「登录」回首页 + 实心「开始创作」带 next=/create
+        expect(header).toContain('openLogin("/")');
+        expect(header).toMatch(/>\s*登录\s*<\/button>/);
+        expect(header).toContain("开始创作");
+        // 已登录：同一位置只留「进入工作台」，不出现两个同义入口
+        expect(header).toContain("进入工作台");
+        expect(header).toContain('openProtectedPath("/create")');
         expect(header).not.toContain("立即体验");
-        // 直接调 openLogin 会让入口绕过 openProtectedPath 的已登录分支
-        expect(header).not.toContain("openLogin(");
+    });
+
+    it("uses official-style navigation items that all have a real destination", async () => {
+        const data = await read("src/app/home/home-data.ts");
+
+        expect(data).toContain('{ label: "AI 创作", href: "/create", action: "protected" }');
+        expect(data).toContain('{ label: "短剧制作", href: "/drama", action: "protected" }');
+        expect(data).toContain('{ label: "作品广场", href: "/gallery", action: "link" }');
+        expect(data).toContain('{ label: "价格", href: "/billing", action: "billing" }');
+        expect(data).toContain('{ label: "关于", href: "/about", action: "link" }');
+
+        // 「关于」是公开页，访客点进来不能被 (user) 布局踢回登录页
+        const about = await read("src/app/about/page.tsx");
+        expect(about).toContain("export default async function AboutPage");
+        expect(about).toContain('href="/login?next=%2Fcreate"');
     });
 
     it("lets /login round-trip the next parameter without an open redirect", async () => {

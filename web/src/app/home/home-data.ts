@@ -20,11 +20,15 @@ export type HomeNavigationItem = {
     action: "link" | "protected" | "billing";
 };
 
+/* 官网栏目按「能做什么 → 看作品 → 多少钱 → 我们是谁」排，
+ * 不再把「创作 Agent / 短剧制作」这类功能名和「作品广场 / 价格」并排放，
+ * 层级更像正式官网；每一项都有真实落点，不放死链。 */
 export const HOME_NAVIGATION = [
-    { label: "创作 Agent", href: "/create", action: "protected" },
+    { label: "AI 创作", href: "/create", action: "protected" },
     { label: "短剧制作", href: "/drama", action: "protected" },
     { label: "作品广场", href: "/gallery", action: "link" },
-    { label: "价格方案", href: "/billing", action: "billing" },
+    { label: "价格", href: "/billing", action: "billing" },
+    { label: "关于", href: "/about", action: "link" },
 ] as const satisfies readonly HomeNavigationItem[];
 
 export const HOME_CREATION_MODES = [

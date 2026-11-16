@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 
-import { SiteLogo } from "@/components/layout/site-logo";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { HOME_NAVIGATION, type HomeNavigationItem } from "./home-data";
@@ -14,31 +13,9 @@ import styles from "./home.module.css";
 export function HomeHeader() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const [navIndicator, setNavIndicator] = useState({ left: 0, width: 0, visible: false });
-    const navItemRefs = useRef<(HTMLAnchorElement | HTMLButtonElement | null)[]>([]);
-    const hoveredNavIndex = useRef<number | null>(null);
-    const { authenticated, site, openBillingPlans, openProtectedPath } = useHomeActions();
+    const { authenticated, site, openLogin, openBillingPlans, openProtectedPath } = useHomeActions();
     const theme = useThemeStore((state) => state.theme);
     const setTheme = useThemeStore((state) => state.setTheme);
-
-    const moveNavIndicator = useCallback((index: number) => {
-        const item = navItemRefs.current[index];
-        if (!item) return;
-        setNavIndicator({ left: item.offsetLeft, width: item.offsetWidth, visible: true });
-    }, []);
-
-    const hideNavIndicator = useCallback(() => {
-        hoveredNavIndex.current = null;
-        setNavIndicator((current) => ({ ...current, visible: false }));
-    }, []);
-
-    useLayoutEffect(() => {
-        const updateIndicator = () => {
-            if (hoveredNavIndex.current !== null) moveNavIndicator(hoveredNavIndex.current);
-        };
-        window.addEventListener("resize", updateIndicator);
-        return () => window.removeEventListener("resize", updateIndicator);
-    }, [moveNavIndicator]);
 
     // 页面滚出首屏后，导航从「贴在玻璃上」变成「浮在内容上」：加一点实底与投影。
     // 滚动发生在 main.app-scroll-page 里，用捕获阶段监听才能收到它的 scroll 事件。
@@ -58,54 +35,23 @@ export function HomeHeader() {
         if (item.action === "protected") openProtectedPath(item.href);
     };
 
-    const trackNavItem = (index: number) => {
-        hoveredNavIndex.current = index;
-        moveNavIndicator(index);
-    };
-
+    /* 品牌区只留字标：原来那枚 ∞ 图形在小尺寸下更像产品图标，
+     * 放在官网导航里会削弱「正式站点」的观感，去掉后由字号和字重承担识别。 */
     return (
         <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ""}`} data-scrolled={scrolled ? "true" : undefined}>
             <div className={styles.headerInner}>
                 <Link href="/" className={styles.brand} aria-label={`${site.title} 首页`}>
-                    <SiteLogo logoUrl={site.logoUrl} className={styles.brandLogo} />
                     <span>{site.title}</span>
                 </Link>
 
-                <nav
-                    className={styles.desktopNav}
-                    aria-label="官网主导航"
-                    onPointerLeave={hideNavIndicator}
-                    onBlur={(event) => {
-                        if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) hideNavIndicator();
-                    }}
-                >
-                    <span className={styles.navGlassIndicator} data-testid="home-nav-glass" aria-hidden="true" style={{ left: navIndicator.left, opacity: navIndicator.visible ? 1 : 0, width: navIndicator.width }} />
-                    {HOME_NAVIGATION.map((item, index) =>
+                <nav className={styles.desktopNav} aria-label="官网主导航">
+                    {HOME_NAVIGATION.map((item) =>
                         item.action !== "link" ? (
-                            <button
-                                key={item.href}
-                                ref={(node) => {
-                                    navItemRefs.current[index] = node;
-                                }}
-                                type="button"
-                                className={styles.navLink}
-                                onClick={() => activate(item)}
-                                onPointerEnter={() => trackNavItem(index)}
-                                onFocus={() => trackNavItem(index)}
-                            >
+                            <button key={item.href} type="button" className={styles.navLink} onClick={() => activate(item)}>
                                 {item.label}
                             </button>
                         ) : (
-                            <Link
-                                key={item.href}
-                                ref={(node) => {
-                                    navItemRefs.current[index] = node;
-                                }}
-                                href={item.href}
-                                className={styles.navLink}
-                                onPointerEnter={() => trackNavItem(index)}
-                                onFocus={() => trackNavItem(index)}
-                            >
+                            <Link key={item.href} href={item.href} className={styles.navLink}>
                                 {item.label}
                             </Link>
                         ),
@@ -114,11 +60,23 @@ export function HomeHeader() {
 
                 <div className={styles.headerActions}>
                     <AnimatedThemeToggler theme={theme} onThemeChange={setTheme} className={styles.themeButton} aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"} />
-                    {/* 未登录时这是一个明确的「登录」入口：整页登录而非弹窗，
-                        登录成功回 /create；已登录时同一位置直接开始创作。 */}
-                    <button type="button" className={styles.primarySmallButton} onClick={() => openProtectedPath("/create")}>
-                        {authenticated ? "开始创作" : "登录"}
-                    </button>
+                    <span className={styles.headerDivider} aria-hidden="true" />
+                    {/* 未登录：文字「登录」回首页，实心「开始创作」直接带 next=/create。
+                        已登录：只留一个「进入工作台」，避免同一位置出现两个同义入口。 */}
+                    {authenticated ? (
+                        <button type="button" className={styles.primarySmallButton} onClick={() => openProtectedPath("/create")}>
+                            进入工作台
+                        </button>
+                    ) : (
+                        <>
+                            <button type="button" className={styles.loginLink} onClick={() => openLogin("/")}>
+                                登录
+                            </button>
+                            <button type="button" className={styles.primarySmallButton} onClick={() => openProtectedPath("/create")}>
+                                开始创作
+                            </button>
+                        </>
+                    )}
                     <button type="button" className={styles.mobileMenuButton} onClick={() => setMobileOpen((value) => !value)} aria-expanded={mobileOpen} aria-controls="home-mobile-menu" aria-label={mobileOpen ? "关闭导航菜单" : "打开导航菜单"}>
                         {mobileOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
                     </button>
@@ -140,6 +98,12 @@ export function HomeHeader() {
                             </Link>
                         ),
                     )}
+                    <div className={styles.mobileNavFooter}>
+                        <button type="button" className={styles.mobileNavCta} onClick={() => openProtectedPath("/create")}>
+                            {authenticated ? "进入工作台" : "开始创作"}
+                            <ArrowRight aria-hidden="true" />
+                        </button>
+                    </div>
                 </nav>
             ) : null}
         </header>

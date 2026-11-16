@@ -135,7 +135,7 @@
     --header-gap-top: 20px;
     background: transparent;
     border: 0;
-    padding: var(--header-gap-top) 12px 0;
+    padding: var(--header-gap-top) 24px 0;
     position: sticky;
     top: 0;
     z-index: 50;
@@ -169,12 +169,12 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.28),
         var(--home-shadow);
     display: grid;
-    gap: 18px;
-    grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
-    height: 64px;
+    gap: 14px;
+    grid-template-columns: minmax(170px, 1fr) auto minmax(210px, 1fr);
+    height: 56px;
     margin: 0 auto;
-    max-width: 1160px;
-    padding: 0 8px 0 18px;
+    max-width: 1280px;
+    padding: 0 8px 0 22px;
     transition:
         background 260ms ease,
         border-color 260ms ease,
@@ -218,6 +218,14 @@
     white-space: nowrap;
 }
 
+/* 去掉图标后字标独立承担识别：字号提一档、字距微收，
+ * 全大写英文在 16px 时容易显得松散，像后台系统名而不是品牌。 */
+.brand {
+    font-size: 18px;
+    gap: 0;
+    letter-spacing: -0.012em;
+}
+
 .brandLogo {
     height: 30px;
     width: 30px;
@@ -226,48 +234,11 @@
 .desktopNav {
     align-items: center;
     display: flex;
-    gap: 4px;
+    gap: 2px;
     isolation: isolate;
     justify-content: center;
-    padding: 4px;
+    padding: 3px;
     position: relative;
-    transition: background-color 180ms ease;
-}
-
-.desktopNav:hover {
-    background: var(--home-accent-soft);
-    border-radius: 999px;
-}
-
-:global(.dark) .desktopNav:hover {
-    background: rgba(255, 255, 255, 0.035);
-}
-
-.navGlassIndicator {
-    background: var(--home-surface-strong);
-    border: 1px solid var(--home-border);
-    border-radius: 999px;
-    bottom: 4px;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 6px 18px rgba(63, 48, 26, 0.1);
-    pointer-events: none;
-    position: absolute;
-    top: 4px;
-    transition:
-        left 420ms cubic-bezier(0.16, 1, 0.3, 1),
-        width 420ms cubic-bezier(0.16, 1, 0.3, 1),
-        opacity 160ms ease;
-    z-index: 0;
-    backdrop-filter: blur(18px) saturate(1.25);
-}
-
-:global(.dark) .navGlassIndicator {
-    background: rgba(246, 242, 233, 0.09);
-    border-color: rgba(246, 242, 233, 0.12);
-    box-shadow:
-        inset 0 1px 0 rgba(246, 242, 233, 0.08),
-        0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .navLink {
@@ -279,9 +250,9 @@
     cursor: pointer;
     display: inline-flex;
     font-size: 14px;
-    font-weight: 560;
-    height: 38px;
-    padding: 0 16px;
+    font-weight: 500;
+    height: 36px;
+    padding: 0 14px;
     position: relative;
     transition: color 160ms ease;
     white-space: nowrap;
@@ -295,9 +266,34 @@
 .headerActions {
     align-items: center;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     justify-content: flex-end;
     min-width: 0;
+}
+
+/* 右侧分成「工具 / 账号」两组：一条 1px 竖线比堆四个等权按钮更像官网。 */
+.headerDivider {
+    background: var(--home-border);
+    flex: 0 0 1px;
+    height: 16px;
+    width: 1px;
+}
+
+.loginLink {
+    background: transparent;
+    border: 0;
+    color: var(--home-muted);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    height: 36px;
+    padding: 0 6px;
+    transition: color 160ms ease;
+    white-space: nowrap;
+}
+
+.loginLink:hover {
+    color: var(--home-text);
 }
 
 .themeButton,
@@ -321,6 +317,18 @@
 .mobileMenuButton svg {
     height: 18px;
     width: 18px;
+}
+
+/* 主题切换只是辅助工具，降成无底图标，不与账号按钮抢层级 */
+.headerActions .themeButton {
+    background: transparent;
+    border-color: transparent;
+    height: 34px;
+    width: 34px;
+}
+
+.headerActions .themeButton:hover {
+    background: var(--home-accent-soft);
 }
 
 .primarySmallButton {
@@ -357,20 +365,22 @@
     transform: translateY(-1px);
 }
 
-/* 顶栏动作降级为次级按钮：一屏里只留 hero 一个实心主 CTA，
- * 之前两个实心按钮颜色还不一样，互相抢注意力。 */
+/* 顶栏只留一个实心主 CTA。hero 的按钮更大，两者不会再互相抢焦点；
+ * 之前把它降级成描边后，右侧没有任何视觉落点，导航看起来像没做完。 */
 .headerActions .primarySmallButton {
-    background: transparent;
-    border: 1px solid color-mix(in srgb, var(--home-accent) 34%, transparent);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 40%, transparent);
-    color: var(--home-accent);
+    background: var(--home-accent);
+    border: 0;
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--home-glow) 55%, transparent);
+    color: var(--home-accent-foreground);
+    font-size: 14px;
     font-weight: 600;
-    min-width: 96px;
+    height: 40px;
+    min-width: 104px;
+    padding: 0 18px;
 }
 
 .headerActions .primarySmallButton:hover {
-    background: var(--home-accent-soft);
-    border-color: color-mix(in srgb, var(--home-accent) 58%, transparent);
+    background: var(--home-accent-hover);
 }
 
 .mobileMenuButton,
@@ -2009,7 +2019,7 @@
     }
     .headerInner {
         grid-template-columns: minmax(0, 1fr) auto;
-        height: 66px;
+        height: 58px;
     }
     .desktopNav {
         display: none;
@@ -2028,7 +2038,7 @@
         position: absolute;
         right: 0;
         /* 跟着头部的上留白走，否则胶囊被顶下来后会被菜单盖住 */
-        top: calc(var(--header-gap-top) + 66px);
+        top: calc(var(--header-gap-top) + 58px);
         backdrop-filter: blur(20px);
     }
     .mobileNav > a,
@@ -2052,6 +2062,28 @@
         height: 16px;
         width: 16px;
     }
+    /* 小屏顶栏隐藏了实心 CTA，主入口收进菜单底部，否则未登录只剩一个「登录」文字 */
+    .mobileNavFooter {
+        padding: 10px 10px 0;
+    }
+    .mobileNavCta {
+        align-items: center;
+        background: var(--home-accent);
+        border: 0;
+        border-radius: 999px;
+        color: var(--home-accent-foreground);
+        cursor: pointer;
+        display: flex;
+        font-size: 14px;
+        font-weight: 600;
+        gap: 8px;
+        height: 46px;
+        justify-content: center;
+        width: 100%;
+    }
+    .mobileNavCta:hover {
+        background: var(--home-accent-hover);
+    }
     .stepsGrid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -2074,20 +2106,25 @@
     .header {
         /* 小屏高度紧张，留白收到 14px 仍然能让胶囊离开视口上沿 */
         --header-gap-top: 14px;
+        padding-inline: 14px;
     }
     .root {
         --home-header-h: 76px;
     }
     .headerInner {
-        height: 62px;
-        padding: 0 14px;
+        height: 54px;
+        padding: 0 12px;
     }
     .brandLogo {
         height: 30px;
         width: 30px;
     }
     .brand {
-        font-size: 15px;
+        font-size: 17px;
+    }
+    .loginLink {
+        font-size: 13px;
+        padding: 0 4px;
     }
     .headerActions > .primarySmallButton {
         display: none;
@@ -2099,7 +2136,7 @@
     }
     .mobileNav {
         padding-inline: 14px;
-        top: calc(var(--header-gap-top) + 62px);
+        top: calc(var(--header-gap-top) + 54px);
     }
     .contentBand {
         background: var(--home-bg);
