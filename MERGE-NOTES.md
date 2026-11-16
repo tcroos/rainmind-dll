@@ -19,11 +19,11 @@
 | 数据模型变化 | **1 个**：站点设置新增 `site.contactImageUrl`（`app_settings.site` JSON 内，无迁移） |
 | 数据库结构变更 / 迁移脚本 | **没有**（无 SQL、无 Prisma 迁移、无新表新列） |
 | 前端依赖变更 | **没有**（`package.json` / `pnpm-lock.yaml` 均未改动） |
-| 新增环境变量 | **2 个**（均为 `NEXT_PUBLIC_*`，构建期内联） |
+| 新增环境变量 | **2 个**（均为 `NEXT_PUBLIC_*`，构建期内联）；另有开发期开关 `NEXT_DEV_BUNDLER` |
 | 新增页面路由 | `/wallet`、`/about` |
 | 行为变更的路由 | `/billing`、`/profile`、`/wallet?section=*`、`/announcements`、`/prompts`、`/my-prompts` |
 
-如果目标项目的后端是旧版本，**只合前端会导致「获取验证码」全部失败**（见 2.1 的兼容性说明）。
+**兼容性提醒**：如果目标项目后端还是旧版本，只合前端**不会报错**（旧成功响应本来就是 `{ "ok": true }`，新前端能通过校验），但会退回旧行为——邮件服务没配置时仍然提示「验证码已发送」。想拿到 503 + 真实原因，必须同时升级后端（见 2.1）。
 
 ---
 
@@ -129,10 +129,12 @@ HTTP/1.1 503
 
 前两处校验 `response.ok && payload.ok === true` 并读取 `delivered`；修改邮箱处只校验 `response.ok`（`email-change` 不会返回 `delivered=false`）。
 
-**合并要求**
+**合并要求（按目标后端版本选择）**
 
-- 后端必须一起带上 `smtp.ts` 的两个新函数与 route 的两段预检，否则新前端在旧后端上会因缺少 `ok:true` 判定失败（旧响应只有 `{ok:true}` 时没问题；一旦旧后端返回 `{error}` 但 200，才会出问题）。
-- 若目标项目暂时不想带 SMTP 探测，最低要求：保留 `{ ok: true, delivered: boolean }` 响应结构；否则新前端的 `payload.ok !== true` 判断需要改回只判断 HTTP 状态。
+- **推荐**：前后端一起合。新前端只在 `response.ok && payload.ok === true` 时提示成功，后端 503/400 的错误文案能原样展示。
+- 只合前端、后端保持旧版：可运行，成功响应 `{ ok: true }` 能通过校验；但 `delivered` 不生效，且「邮件服务没配置却提示已发送」的旧问题会保留。
+- 只合后端、前端保持旧版：可运行（旧前端只判断 HTTP 状态码），但拿不到 `delivered=false` 的防枚举提示。
+- 如果目标项目改写了验证码接口：最低要求是**成功时仍返回 `ok: true`**；否则要么同步改前端校验，要么把前端改回只判断 HTTP 状态。
 
 ---
 
@@ -147,8 +149,8 @@ HTTP/1.1 503
 
 | 参数 | 必填 | 说明 |
 | --- | --- | --- |
-| `page` | 否 | 默认 1，服务端上限 1,000,000 |
-| `pageSize` | 否 | 默认 12，范围 1–100 |
+| `page` | 否 | 默认 1；超过 1,000,000 按 1,000,000 处理 |
+| `pageSize` | 否 | 默认 12；超过 100 按 100 处理 |
 | `keyword` | 否 | **新增**。服务端 `trim` 并截断到 60 字符；对 `title` 做不区分大小写的子串匹配；`total` 也会按关键词过滤后统计 |
 
 **响应（`data` 部分）**
@@ -298,7 +300,7 @@ contactImageUrl: string; // 首页「联系我们」弹窗的图片；空字符�
 | 路由 | 变更 |
 | --- | --- |
 | `/billing` | 由「重定向到 `/profile?section=billing`」改为：带 `?product=` → `/billing/checkout?product=...`；不带 → `/wallet` |
-| `/profile` | 只保留「概览 / 个人资料 / 账户与安全 / 帮助中心」；`?section=` 属于资金类（wallet、billing、coupons、orders、points、consume、referrals）时 302 到 `/wallet?section=...` |
+| `/profile` | 只保留「账户概览 / 个人资料 / 账户与安全 / 帮助中心」；`?section=` 属于资金类（wallet、billing、coupons、orders、points、consume、referrals）时 302 到 `/wallet?section=...` |
 | `/wallet` | 资金类分区的唯一入口；余额卡、订单/积分账单；`/billing` 旧链接全部收口到这里 |
 | `/announcements` | 服务端渲染的公告列表重做：编辑式页头、日期栏卡片、长正文折叠（客户端组件）、页码分页；越界页码会夹回最后一页；每页 20 条 |
 | `/prompts` | 提示词库重做：分类胶囊 + 标签下拉 + 搜索；卡片封面单图、无封面纯文字卡；每页 16 条 |
