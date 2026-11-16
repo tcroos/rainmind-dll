@@ -18,6 +18,15 @@ describe("canvas library layout", () => {
         expect(page).toContain("xl:grid-cols-4");
     });
 
+    it("enters a freshly created canvas without flashing a new tile first", async () => {
+        const [page, store] = await Promise.all([read("src/app/(user)/canvas/page.tsx"), read("src/app/(user)/canvas/stores/use-canvas-store.ts")]);
+
+        expect(store).toContain("insertIntoList");
+        expect(store).toContain("options?.insertIntoList !== false");
+        // 新建 / 自动打开都直接进画布，不往列表插卡片
+        expect(page).toContain("{ insertIntoList: false }");
+    });
+
     it("renders real thumbnails from canvas previews instead of text-only cards", async () => {
         const [card, cover] = await Promise.all([read("src/app/(user)/canvas/components/canvas-project-card.tsx"), read("src/app/(user)/canvas/components/canvas-project-cover.tsx")]);
         expect(card).toContain("CanvasProjectCover");

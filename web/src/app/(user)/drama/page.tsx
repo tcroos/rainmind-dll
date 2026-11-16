@@ -58,14 +58,16 @@ export default function DramaPage() {
             <div className="mx-auto w-full max-w-7xl px-2 py-2 sm:px-6 sm:py-8">
                 <header className="flex items-end justify-between gap-3 border-b border-border pb-3 sm:gap-5 sm:pb-6">
                     <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Clapperboard className="size-4" />
+                        <div className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--ink-3)]">
+                            <Clapperboard className="size-3.5" />
                             短剧生产线
                         </div>
-                        <h1 className="mt-1.5 text-xl font-semibold sm:mt-2 sm:text-2xl">短剧项目</h1>
-                        <p className="mt-1.5 text-xs leading-5 text-muted-foreground sm:mt-2 sm:text-sm">
-                            共 {projectTotal} 个项目 · 已加载 {projects.length} 个 / {episodeCount} 集 · {pendingCount} 个执行中任务
-                        </p>
+                        <h1 className="mt-1.5 text-[24px] font-semibold leading-8 tracking-tight sm:text-[26px]">短剧项目</h1>
+                        <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5 text-[11.5px] text-[var(--ink-2)]">
+                            <span className="inline-flex h-6 items-center rounded-full bg-[var(--surface-inset)] px-2.5">{projectTotal} 个项目</span>
+                            <span className="inline-flex h-6 items-center rounded-full bg-[var(--surface-inset)] px-2.5">{episodeCount} 集</span>
+                            {pendingCount ? <span className="inline-flex h-6 items-center rounded-full bg-amber-50 px-2.5 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">{pendingCount} 个任务执行中</span> : null}
+                        </div>
                     </div>
                     <Button type="primary" className="!h-9 !shrink-0 !px-3 sm:!px-4" icon={<Plus className="size-4" />} disabled={!hydrated} onClick={() => setOpen(true)}>
                         新建短剧
@@ -76,7 +78,18 @@ export default function DramaPage() {
                     <div className="grid min-h-16 place-items-center text-sm text-muted-foreground sm:min-h-32">正在加载短剧项目…</div>
                 ) : projects.length ? (
                     <>
-                        <section className="grid gap-1.5 py-1 sm:grid-cols-2 sm:gap-4 sm:py-6 xl:grid-cols-3">
+                        <section className="grid gap-3 py-4 sm:grid-cols-2 sm:gap-4 sm:py-6 xl:grid-cols-3">
+                            <button
+                                type="button"
+                                onClick={() => setOpen(true)}
+                                className="group/create flex h-full min-h-[196px] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-[rgba(17,17,19,0.22)] bg-[linear-gradient(135deg,var(--surface-soft)_0%,var(--surface-inset)_100%)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-[rgba(17,17,19,0.4)] hover:shadow-[0_12px_28px_-16px_rgba(17,17,19,0.3)] dark:border-[rgba(255,255,255,0.22)] dark:hover:border-[rgba(255,255,255,0.4)]"
+                            >
+                                <span className="grid size-10 place-items-center rounded-full bg-[var(--surface-panel)] text-[var(--ink-1)] transition-transform duration-200 group-hover/create:scale-105">
+                                    <Plus className="size-[18px]" />
+                                </span>
+                                <span className="mt-0.5 text-[13px] font-medium text-[var(--ink-1)]">新建短剧</span>
+                                <span className="text-[11px] text-[var(--ink-3)]">从故事简介开始搭分镜</span>
+                            </button>
                             {projects.map((project) => (
                                 <DramaProjectCard key={project.id} project={project} />
                             ))}

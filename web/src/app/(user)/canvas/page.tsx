@@ -61,7 +61,7 @@ export default function CanvasPage() {
         if (creating) return;
         setCreating(true);
         try {
-            enterProject(await createProject(`${siteTitle} 画布 ${total + 1}`));
+            enterProject(await createProject(`${siteTitle} 画布 ${total + 1}`, { insertIntoList: false }));
         } catch (error) {
             message.error(error instanceof Error ? error.message : "画布创建失败");
         } finally {
@@ -128,7 +128,7 @@ export default function CanvasPage() {
         void (async () => {
             try {
                 const defaultName = `${siteTitle} 画布 ${total + 1}`;
-                const id = mode === "new" ? await createProject(defaultName) : projects[0]?.id || (await createProject(defaultName));
+                const id = mode === "new" ? await createProject(defaultName, { insertIntoList: false }) : projects[0]?.id || (await createProject(defaultName, { insertIntoList: false }));
                 enterProject(id);
             } catch (error) {
                 autoOpenRef.current = false;
@@ -137,7 +137,9 @@ export default function CanvasPage() {
         })();
     }, [createProject, message, mode, projects, ready, siteTitle, total]);
 
-    if (ready && (mode === "new" || mode === "recent")) return <main className="flex h-full items-center justify-center bg-background text-sm text-stone-500">正在打开画布...</main>;
+    if (creating || (ready && (mode === "new" || mode === "recent"))) {
+        return <main className="flex h-full items-center justify-center gap-2 bg-background text-sm text-[var(--ink-3)]">正在打开画布...</main>;
+    }
 
     return (
         <main className="h-full overflow-auto bg-background text-[var(--ink-1)]">

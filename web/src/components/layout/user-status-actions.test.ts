@@ -21,4 +21,21 @@ describe("signing out of the workspace", () => {
         expect(tsx).not.toContain("pathname.startsWith");
         expect(tsx).not.toContain("已退出登录，可继续浏览");
     });
+
+    it("renders the account menu as a controlled panel instead of an antd dropdown", async () => {
+        const tsx = await read("src/components/layout/user-status-actions.tsx");
+
+        // 自定义面板才有稳定的排版：套餐信息一块、菜单一组、退出登录单独一档
+        expect(tsx).toContain("function AccountMenuPanel(");
+        expect(tsx).toContain("account-menu-popover");
+        expect(tsx).not.toContain("accountItems");
+    });
+
+    it("keeps the plan action readable on its dark pill", async () => {
+        const tsx = await read("src/components/layout/user-status-actions.tsx");
+
+        // 全局有未分层的 `button { color: inherit }`，Tailwind 的 text-* 会被压掉，
+        // 这里必须用内联色，否则黑底黑字（之前就踩过）
+        expect(tsx).toContain('style={{ color: "var(--surface-panel)" }}');
+    });
 });

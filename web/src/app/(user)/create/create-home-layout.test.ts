@@ -105,6 +105,9 @@ describe("create Agent home layout", () => {
         expect(generationControls).toContain("placement={placement}");
         expect(composer).toContain("hide-scrollbar scroll-fade-x flex min-w-0 flex-1");
         expect(composer).toContain('data-testid="creative-composer-reference-row"');
+        // 参考素材与 Skill 各占一行：素材在上、Skill 在下，不再互相挤位置
+        expect(composer).toContain('data-testid="creative-composer-skill-row"');
+        expect(composer.indexOf('data-testid="creative-composer-reference-row"')).toBeLessThan(composer.indexOf('data-testid="creative-composer-skill-row"'));
         expect(composer).toContain("creativeComposerIconButtonClass(false)");
         expect(composer).toContain("creativeComposerSendButtonClass");
         expect(composer).toContain('rounded-[20px] p-0');

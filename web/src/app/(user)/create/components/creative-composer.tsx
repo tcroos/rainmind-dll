@@ -140,8 +140,10 @@ export function CreativeComposer({
     const mediaAttachments = visibleAttachments.filter((asset) => (asset.type === "image" || asset.type === "video") && Boolean(asset.serverUrl || asset.remoteUrl));
     const inputMediaAttachments = compact ? allMediaAttachments.filter((asset) => !frameAssetIds.has(asset.id)) : mediaAttachments;
     const otherAttachments = visibleAttachments.filter((asset) => !mediaAttachments.some((media) => media.id === asset.id));
-    // 展开态：参考素材统一收进盒子顶部的独立一行（对齐 create.moss.cn 的排布），输入区保持整宽。
-    const showReferenceRow = !compact && (Boolean(selectedSkill) || otherAttachments.length > 0 || showVideoFrames || inputMediaAttachments.length > 0);
+    // 展开态：参考素材和 Skill 各占一行。素材（缩略图/文件/首尾帧）在上，
+    // Skill 标签在下——之前两者挤在同一行，加了图之后 Skill 会被挤到一边，还会推着素材换行。
+    const showMediaRow = !compact && (otherAttachments.length > 0 || showVideoFrames || inputMediaAttachments.length > 0);
+    const showSkillRow = !compact && Boolean(selectedSkill);
 
     useEffect(() => setReady(true), []);
 
@@ -294,25 +296,8 @@ export function CreativeComposer({
                 )}
                 onClick={compact ? onExpand : undefined}
             >
-                {showReferenceRow ? (
+                {showMediaRow ? (
                     <div data-testid="creative-composer-reference-row" className="flex flex-wrap items-center gap-2 px-3 pb-0.5 pt-3 sm:gap-2.5 sm:px-4">
-                        {selectedSkill ? (
-                            <span className="flex h-8 max-w-60 shrink-0 items-center gap-1.5 rounded-lg bg-[var(--surface-soft)] pl-1 pr-1 text-[13px] font-medium text-[var(--ink-1)]">
-                                <span className="grid size-5 shrink-0 place-items-center rounded-md bg-[var(--surface-inset)] text-[var(--ink-2)] dark:bg-[var(--surface-inset)] dark:text-[var(--ink-2)]">
-                                    <Sparkles className="size-3.5" />
-                                </span>
-                                <span className="truncate">Skill · {selectedSkill.name}</span>
-                                <button
-                                    type="button"
-                                    className="grid size-5 shrink-0 place-items-center rounded-md text-[#7c8795] transition hover:bg-[rgba(34,39,38,0.06)] hover:text-[#263141] dark:text-[#aab3bf] dark:hover:bg-[rgba(255,255,255,0.08)] dark:hover:text-white"
-                                    onClick={onRemoveSkill}
-                                    aria-label={`移除 Skill ${selectedSkill.name}`}
-                                    title="移除 Skill"
-                                >
-                                    <X className="size-3" />
-                                </button>
-                            </span>
-                        ) : null}
                         {otherAttachments.map((asset) => {
                             const Icon = asset.type === "image" ? ImageIcon : asset.type === "video" ? FileVideo : FileAudio;
                             return (
@@ -350,6 +335,27 @@ export function CreativeComposer({
                                 return <ComposerMediaThumbnail key={asset.id} asset={asset} compact={compact} onRemove={onRemoveAttachment} />;
                             })
                         )}
+                    </div>
+                ) : null}
+                {showSkillRow ? (
+                    <div data-testid="creative-composer-skill-row" className={cn("flex items-center gap-2 px-3 sm:px-4", showMediaRow ? "pt-2" : "pt-3")}>
+                        {selectedSkill ? (
+                            <span className="flex h-7 max-w-60 shrink-0 items-center gap-1.5 rounded-full bg-[var(--surface-soft)] pl-1 pr-1 text-[12.5px] font-medium text-[var(--ink-1)]">
+                                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--surface-panel)] text-[var(--ink-2)]">
+                                    <Sparkles className="size-3" />
+                                </span>
+                                <span className="truncate">Skill · {selectedSkill.name}</span>
+                                <button
+                                    type="button"
+                                    className="grid size-5 shrink-0 place-items-center rounded-full text-[var(--ink-3)] transition hover:bg-[var(--surface-panel)] hover:text-[var(--ink-1)]"
+                                    onClick={onRemoveSkill}
+                                    aria-label={`移除 Skill ${selectedSkill.name}`}
+                                    title="移除 Skill"
+                                >
+                                    <X className="size-3" />
+                                </button>
+                            </span>
+                        ) : null}
                     </div>
                 ) : null}
                 <div

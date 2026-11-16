@@ -74,14 +74,14 @@ function CoverTile({ preview, allowVideo, className }: { preview: CanvasProjectP
 
 export function CanvasCoverPlaceholder({ className }: { className?: string }) {
     return (
-        <div className={cn("relative size-full overflow-hidden bg-[linear-gradient(145deg,var(--surface-panel)_0%,var(--surface-soft)_100%)]", className)}>
+        <div className={cn("relative size-full overflow-hidden bg-[linear-gradient(145deg,var(--surface-soft)_0%,var(--surface-inset)_100%)]", className)}>
             <svg
                 viewBox="0 0 240 150"
-                className="absolute inset-0 size-full text-[rgba(17,17,19,0.34)] dark:text-[rgba(255,255,255,0.42)]"
+                className="absolute inset-0 size-full text-[rgba(17,17,19,0.52)] dark:text-[rgba(255,255,255,0.5)]"
                 fill="none"
                 aria-hidden
             >
-                <g stroke="currentColor" strokeOpacity="0.42" strokeWidth="1.2" strokeLinecap="round">
+                <g stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.2" strokeLinecap="round">
                     <path d="M74 62h34a6 6 0 0 1 6 6v14" />
                     <path d="M120 82h22" />
                     <path d="M154 62h-8a6 6 0 0 0-6 6v14" />
@@ -89,10 +89,10 @@ export function CanvasCoverPlaceholder({ className }: { className?: string }) {
                     <path d="M148 106h18" />
                 </g>
                 <g fill="currentColor">
-                    <rect x="52" y="48" width="22" height="28" rx="6" fillOpacity="0.4" />
-                    <rect x="140" y="48" width="22" height="28" rx="6" fillOpacity="0.4" />
-                    <rect x="106" y="76" width="28" height="20" rx="6" fillOpacity="0.62" />
-                    <rect x="104" y="98" width="34" height="18" rx="6" fillOpacity="0.5" />
+                    <rect x="52" y="48" width="22" height="28" rx="6" fillOpacity="0.42" />
+                    <rect x="140" y="48" width="22" height="28" rx="6" fillOpacity="0.42" />
+                    <rect x="106" y="76" width="28" height="20" rx="6" fillOpacity="0.72" />
+                    <rect x="104" y="98" width="34" height="18" rx="6" fillOpacity="0.55" />
                 </g>
             </svg>
         </div>

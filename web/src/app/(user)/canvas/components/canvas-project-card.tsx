@@ -80,7 +80,8 @@ export function CanvasProjectCard({ project }: { project: CanvasProjectSummary }
         <article className="group/card relative flex min-w-0 flex-col">
             <div
                 className={cn(
-                    "relative aspect-[16/10] overflow-hidden rounded-xl bg-[var(--surface-soft)] transition-[transform,box-shadow] duration-200",
+                    "relative aspect-[16/10] overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--surface-soft)] shadow-[0_1px_2px_rgba(17,17,19,0.04),0_8px_20px_-16px_rgba(17,17,19,0.28)] transition-[transform,box-shadow] duration-200",
+                    "dark:border-transparent dark:shadow-none",
                     "group-hover/card:-translate-y-0.5 group-hover/card:shadow-[0_12px_28px_-14px_rgba(17,17,19,0.3),0_2px_6px_-2px_rgba(17,17,19,0.08)]",
                     "dark:group-hover/card:shadow-[0_14px_30px_-14px_rgba(0,0,0,0.75),0_2px_6px_-2px_rgba(0,0,0,0.5)]",
                     // 菜单是 portal 出去渲染的，鼠标移进菜单就丢了 hover，这里补一次，防止卡片"掉回去"
@@ -159,7 +160,7 @@ export function CanvasProjectCard({ project }: { project: CanvasProjectSummary }
                 ) : (
                     <button type="button" onPointerEnter={preload} onClick={open} className="block w-full cursor-pointer text-left">
                         <h2 className="truncate text-[14px] font-medium leading-[1.5] text-[var(--ink-1)]">{project.title}</h2>
-                        <p className="mt-0.5 truncate text-[12px] leading-[1.4] text-[var(--ink-3)]">
+                        <p className="mt-0.5 truncate text-[12px] leading-[1.4] text-[var(--ink-2)]/80">
                             {canvasProjectMeta(project.nodeCount, project.connectionCount)} · {formatCanvasUpdatedAt(project.updatedAt)}
                         </p>
                     </button>

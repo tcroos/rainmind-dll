@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronRight, CreditCard, Crown, Gift, Globe, Keyboard, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { MenuProps } from "antd";
-import { App, Button, Dropdown, Input, Popover } from "antd";
+import { App, Button, Input, Popover } from "antd";
 
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { BillingPlansModal } from "@/components/billing/billing-plans-modal";
@@ -61,113 +60,6 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
     const accountName = user?.displayName || user?.username || "用户";
     const accountSecondary = user ? `ID：${user.accountId}` : "";
     const planActionLabel = user?.hasActivePlan ? "续费套餐" : "升级套餐";
-    const accountItems: MenuProps["items"] = [
-        {
-            type: "group",
-            label: (
-                <div className="w-full py-0.5">
-                    <div className="flex items-center gap-2.5">
-                        {avatarUrl ? (
-                            <img src={avatarUrl} alt="" className="size-9 rounded-lg object-cover" referrerPolicy="no-referrer" />
-                        ) : (
-                            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[linear-gradient(135deg,#f6b181_0%,#e2671f_100%)] text-[13px] font-semibold text-white ring-1 ring-black/5 dark:ring-white/15">{avatarInitial}</span>
-                        )}
-                        <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-semibold text-stone-950 dark:text-stone-100">{accountName}</div>
-                            {accountSecondary ? (
-                                <div className="mt-0.5 truncate text-xs text-stone-400 dark:text-stone-500" title={accountSecondary}>
-                                    {accountSecondary}
-                                </div>
-                            ) : null}
-                        </div>
-                    </div>
-                    <div className="mt-2.5 rounded-lg border border-stone-200 bg-stone-50 p-2.5 dark:border-stone-800 dark:bg-stone-900/70">
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                                <div className="text-[11px] text-stone-400 dark:text-stone-500">当前套餐</div>
-                                <div className="mt-0.5 truncate text-sm font-semibold text-stone-900 dark:text-stone-100">{user?.planName || user?.planId || "免费版"}</div>
-                            </div>
-                            <button
-                                type="button"
-                                className="account-upgrade-button inline-flex h-7 shrink-0 items-center justify-center gap-1 rounded-md bg-stone-950 px-2.5 text-[11px] font-semibold transition hover:bg-black dark:bg-white dark:hover:bg-stone-100"
-                                aria-label={planActionLabel}
-                                title={planActionLabel}
-                                onClick={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    setAccountOpen(false);
-                                    setPlansOpen(true);
-                                }}
-                            >
-                                <Crown className="size-3.5" /> {planActionLabel}
-                            </button>
-                        </div>
-                        <div className="mt-2 flex items-center justify-between gap-3 border-t border-stone-200 pt-2 text-xs dark:border-stone-800">
-                            <span className="text-stone-500 dark:text-stone-400">积分余额</span>
-                            <span className="inline-flex shrink-0 items-center gap-1.5 font-semibold text-stone-900 dark:text-stone-100">
-                                <CreditSymbol className="text-sm text-[#66758e] dark:text-[#d8dee8]" />
-                                {formatCreditAmount(user?.pointsBalance || 0)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            ),
-            children: [],
-        },
-        { type: "divider" },
-        {
-            key: "profile",
-            icon: <UserCircle className="size-4" />,
-            label: (
-                <Link href="/profile" prefetch onMouseEnter={() => router.prefetch("/profile")} onFocus={() => router.prefetch("/profile")}>
-                    个人中心
-                </Link>
-            ),
-        },
-        {
-            key: "billing",
-            icon: <CreditCard className="size-4" />,
-            label: (
-                <Link href="/profile?section=billing" prefetch onMouseEnter={() => router.prefetch("/profile?section=billing")} onFocus={() => router.prefetch("/profile?section=billing")}>
-                    套餐中心
-                </Link>
-            ),
-        },
-        ...(user?.role === "admin"
-            ? [
-                  { type: "divider" as const },
-                  {
-                      key: "admin",
-                      icon: <ShieldCheck className="size-4" />,
-                      label: (
-                          <Link href="/admin" prefetch onMouseEnter={() => router.prefetch("/admin")} onFocus={() => router.prefetch("/admin")}>
-                              管理员后台
-                          </Link>
-                      ),
-                  },
-              ]
-            : []),
-        { type: "divider" },
-        {
-            // 工作区里的 logo 指向 /create（工作台首页），不再回营销页；
-            // 想回欢迎页得有明确出口，否则登录后就再也回不去了。
-            key: "site",
-            icon: <Globe className="size-4" />,
-            label: (
-                <Link href="/" prefetch onMouseEnter={() => router.prefetch("/")} onFocus={() => router.prefetch("/")}>
-                    官网首页
-                </Link>
-            ),
-        },
-        { type: "divider" },
-        {
-            key: "logout",
-            icon: <LogOut className="size-4" />,
-            label: "退出登录",
-            danger: true,
-        },
-    ];
-
     useEffect(() => {
         if (user?.role === "admin") router.prefetch("/admin");
         if (user) {
@@ -184,8 +76,7 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
         return () => mediaQuery.removeEventListener("change", syncViewport);
     }, []);
 
-    const handleMenuClick: MenuProps["onClick"] = async ({ key }) => {
-        if (key !== "logout") return;
+    const logout = async () => {
         try {
             await fetch("/api/auth/logout", { method: "POST" });
             await resetClientSessionState();
@@ -196,18 +87,13 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
         }
     };
 
-    const handleAccountMenuClick: MenuProps["onClick"] = (info) => {
-        setAccountOpen(false);
-        void handleMenuClick(info);
-    };
-
     useEffect(() => {
         if (variant !== "canvas" || (!pointsOpen && !accountOpen)) return;
         const closeCanvasPopups = (event: PointerEvent) => {
             const target = event.target;
             if (!(target instanceof Node)) return;
             if (rootRef.current?.contains(target)) return;
-            if (target instanceof Element && target.closest(".user-points-popover, .ant-dropdown, .ant-dropdown-menu, .ant-dropdown-menu-submenu, .ant-dropdown-menu-submenu-popup")) {
+            if (target instanceof Element && target.closest(".user-points-popover, .account-menu-popover, .ant-popover, .ant-dropdown, .ant-dropdown-menu, .ant-dropdown-menu-submenu, .ant-dropdown-menu-submenu-popup")) {
                 return;
             }
             setPointsOpen(false);
@@ -279,7 +165,33 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
             />
             {user ? (
                 <>
-                    <Dropdown rootClassName="account-menu-dropdown" open={accountOpen} onOpenChange={handleAccountOpenChange} menu={{ items: accountItems, onClick: handleAccountMenuClick }} trigger={["click"]} placement="bottomRight">
+                    <Popover
+                        rootClassName="account-menu-popover"
+                        open={accountOpen}
+                        onOpenChange={handleAccountOpenChange}
+                        trigger="click"
+                        placement="bottomRight"
+                        arrow={false}
+                        content={
+                            <AccountMenuPanel
+                                user={user}
+                                avatarUrl={avatarUrl}
+                                avatarInitial={avatarInitial}
+                                onNavigate={(href) => {
+                                    setAccountOpen(false);
+                                    router.push(href);
+                                }}
+                                onUpgrade={() => {
+                                    setAccountOpen(false);
+                                    setPlansOpen(true);
+                                }}
+                                onLogout={() => {
+                                    setAccountOpen(false);
+                                    void logout();
+                                }}
+                            />
+                        }
+                    >
                         <button
                             type="button"
                             className={cn(
@@ -303,7 +215,7 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
                                 </span>
                             )}
                         </button>
-                    </Dropdown>
+                    </Popover>
                 </>
             ) : (
                 <Link href="/login" className={cn(variant === "canvas" ? canvasControlClass : defaultControlClass, "gap-2 px-2.5", variant === "canvas" && "canvas-account-action")} style={iconStyle}>
@@ -367,65 +279,165 @@ function PointsSummaryPanel({ user, onClose, onUpgrade }: { user: LocalUser; onC
         }
     };
 
+    const permanentPoints = user.permanentPointsBalance ?? Math.max(0, user.pointsBalance - (user.dailyPointsBalance || 0));
     return (
-        <div className="user-points-panel w-[min(19rem,calc(100vw-2rem))] text-stone-950 dark:text-stone-100">
-            <div className="flex items-start justify-between gap-3 px-0.5 pb-2.5">
+        <div className="user-points-panel w-[min(19rem,calc(100vw-2rem))] text-[var(--ink-1)]">
+            <div className="flex items-end justify-between gap-3 px-0.5">
                 <div className="min-w-0">
-                    <div className="text-base font-semibold leading-6">积分记录</div>
-                    <div className="mt-0.5 text-[11px] leading-4 text-stone-500 dark:text-stone-400">{recordTotal === undefined ? "余额与使用记录" : `共 ${recordTotal} 条记录，按时间倒序`}</div>
-                </div>
-                <span className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-2.5 text-xs font-medium text-stone-600 dark:border-stone-800 dark:bg-stone-900/70 dark:text-stone-300">
-                    <CreditSymbol className="text-sm text-sky-600 dark:text-sky-300" /> 余额 <strong className="text-sm text-stone-950 dark:text-stone-100">{formatCreditAmount(user.pointsBalance)}</strong>
-                </span>
-            </div>
-            <div className="grid grid-cols-2 border-y border-stone-200 py-2 dark:border-stone-800">
-                <div className="border-r border-stone-200 pr-3 dark:border-stone-800">
-                    <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-[11px] text-stone-500 dark:text-stone-400">今日可用</span>
-                        <strong className="shrink-0 text-sm font-semibold tabular-nums">{formatCreditAmount(user.dailyPointsBalance || 0)}</strong>
+                    <div className="text-[11.5px] leading-4 text-[var(--ink-3)]">当前积分</div>
+                    <div className="mt-1.5 flex items-baseline gap-1.5">
+                        <CreditSymbol className="size-4 self-center text-[var(--brand-600)]" />
+                        <span className="text-[26px] font-semibold leading-7 tabular-nums">{formatCreditAmount(user.pointsBalance)}</span>
                     </div>
                 </div>
-                <div className="pl-3">
-                    <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-[11px] text-stone-500 dark:text-stone-400">永久积分</span>
-                        <strong className="shrink-0 text-sm font-semibold tabular-nums">{formatCreditAmount(user.permanentPointsBalance ?? Math.max(0, user.pointsBalance - (user.dailyPointsBalance || 0)))}</strong>
+                <div className="shrink-0 pb-1 text-right text-[11px] leading-[18px] text-[var(--ink-3)]">
+                    <div>
+                        今日可用 <strong className="font-medium tabular-nums text-[var(--ink-2)]">{formatCreditAmount(user.dailyPointsBalance || 0)}</strong>
+                    </div>
+                    <div>
+                        永久 <strong className="font-medium tabular-nums text-[var(--ink-2)]">{formatCreditAmount(permanentPoints)}</strong>
                     </div>
                 </div>
             </div>
-            <div className="py-2.5">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-stone-800 dark:text-stone-100">
-                        <Gift className="size-4 text-sky-600 dark:text-sky-300" /> CDK 兑换
+
+            <div className="mt-3 border-t border-[var(--hairline)] pt-3">
+                <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium">
+                        <Gift className="size-3.5 text-[var(--brand-600)]" /> CDK 兑换
                     </span>
-                    <span className="text-[11px] text-stone-400 dark:text-stone-500">兑换后自动刷新</span>
+                    <span className="truncate text-[10.5px] text-[var(--ink-3)]">{recordTotal === undefined ? "兑换后自动到账" : `共 ${recordTotal} 条积分记录`}</span>
                 </div>
-                <Input.Search
-                    className="points-cdk-search"
-                    size="small"
-                    value={code}
-                    placeholder="输入兑换密钥"
-                    enterButton={
-                        <Button type="primary" size="small" loading={redeeming}>
-                            兑换
-                        </Button>
-                    }
-                    onChange={(event) => setCode(event.target.value)}
-                    onSearch={() => void redeemCode()}
-                />
+                <div className="mt-2 flex items-center gap-1.5">
+                    <Input value={code} size="middle" className="min-w-0 flex-1" placeholder="输入兑换密钥" aria-label="CDK 兑换密钥" onChange={(event) => setCode(event.target.value)} onPressEnter={() => void redeemCode()} />
+                    <Button type="primary" className="!h-9 !shrink-0 !px-3 !text-[12.5px]" loading={redeeming} onClick={() => void redeemCode()}>
+                        兑换
+                    </Button>
+                </div>
             </div>
-            <Button
-                block
-                type="primary"
-                icon={<CreditCard className="size-4" />}
-                onClick={onUpgrade}
-                className="points-summary-purchase !flex !h-9 !items-center !justify-center !gap-2 !rounded-lg !border-stone-950 !bg-stone-950 !px-3 !text-xs !font-semibold !text-white !shadow-none hover:!border-black hover:!bg-black hover:!text-white dark:!border-white dark:!bg-white dark:!text-stone-950 dark:hover:!border-stone-100 dark:hover:!bg-stone-100 dark:hover:!text-stone-950"
-            >
-                购买积分与套餐
-            </Button>
-            <Link href="/profile?section=consume" onClick={onClose} className="mt-1 flex min-h-9 items-center justify-between rounded-lg px-2 text-sm font-medium text-stone-800 transition hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800/80">
-                使用详情
-                <ChevronRight className="size-4 text-stone-400" />
-            </Link>
+
+            <div className="mt-3.5 flex flex-col gap-1">
+                <Button
+                    block
+                    type="primary"
+                    icon={<CreditCard className="size-4" />}
+                    onClick={onUpgrade}
+                    className="points-summary-purchase !flex !h-9 !items-center !justify-center !gap-2 !rounded-lg !border-stone-950 !bg-stone-950 !px-3 !text-[12.5px] !font-semibold !text-white !shadow-none hover:!border-black hover:!bg-black hover:!text-white dark:!border-white dark:!bg-white dark:!text-stone-950 dark:hover:!border-stone-100 dark:hover:!bg-stone-100 dark:hover:!text-stone-950"
+                >
+                    购买积分与套餐
+                </Button>
+                <Link
+                    href="/profile?section=consume"
+                    onClick={onClose}
+                    className="flex h-9 items-center justify-between rounded-lg px-2 text-[12.5px] font-medium text-[var(--ink-2)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--ink-1)]"
+                >
+                    使用详情
+                    <ChevronRight className="size-4 text-[var(--ink-3)]" />
+                </Link>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * 账户菜单：整块自定义面板，不再走 antd 的 Dropdown menu。
+ * 菜单项之间去掉一条条分割线，靠留白分组；套餐信息收成一块浅底卡片，
+ * 续费按钮从黄底改成跟随主题的黑/白小胶囊。
+ */
+function AccountMenuPanel({
+    user,
+    avatarUrl,
+    avatarInitial,
+    onNavigate,
+    onUpgrade,
+    onLogout,
+}: {
+    user: LocalUser;
+    avatarUrl?: string;
+    avatarInitial: string;
+    onNavigate: (href: string) => void;
+    onUpgrade: () => void;
+    onLogout: () => void;
+}) {
+    const accountName = user.displayName || user.username || "用户";
+    const planLabel = user.planName || user.planId || "免费版";
+    const planActionLabel = user.hasActivePlan ? "续费套餐" : "升级套餐";
+    const rows = [
+        { key: "profile", label: "个人中心", icon: UserCircle, href: "/profile" },
+        { key: "billing", label: "套餐中心", icon: CreditCard, href: "/profile?section=billing" },
+        ...(user.role === "admin" ? [{ key: "admin", label: "管理员后台", icon: ShieldCheck, href: "/admin" }] : []),
+        { key: "site", label: "官网首页", icon: Globe, href: "/" },
+    ];
+    return (
+        <div className="w-[min(18.5rem,calc(100vw-2rem))] text-[var(--ink-1)]">
+            <div className="flex items-center gap-2.5 px-0.5">
+                <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full ring-1 ring-black/5 dark:ring-white/15">
+                    {avatarUrl ? (
+                        <img src={avatarUrl} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                        <span className="grid size-full place-items-center bg-[linear-gradient(135deg,#f6b181_0%,#e2671f_100%)] text-[13px] font-semibold text-white">{avatarInitial}</span>
+                    )}
+                </span>
+                <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13.5px] font-semibold leading-5">{accountName}</div>
+                    <div className="mt-0.5 truncate text-[11px] leading-4 text-[var(--ink-3)]">ID：{user.accountId}</div>
+                </div>
+            </div>
+
+            <div className="mt-3 rounded-xl bg-[var(--surface-inset)] p-2.5">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                        <div className="text-[10.5px] leading-4 text-[var(--ink-3)]">当前套餐</div>
+                        <div className="mt-0.5 truncate text-[13px] font-semibold leading-5">{planLabel}</div>
+                    </div>
+                    <button
+                        type="button"
+                        /* 按钮文字色走内联样式：全局有未分层级的 `button { color: inherit }`，
+                           Tailwind 的 text-* 在 @layer 里会被它压掉，黑底黑字就这么来的。 */
+                        style={{ color: "var(--surface-panel)" }}
+                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md bg-[#18181b] px-2.5 text-[11px] font-semibold transition hover:opacity-90 dark:bg-[#ffffff]"
+                        onClick={onUpgrade}
+                        aria-label={planActionLabel}
+                        title={planActionLabel}
+                    >
+                        <Crown className="size-3" /> {planActionLabel}
+                    </button>
+                </div>
+                <div className="mt-2 flex items-center justify-between border-t border-black/5 pt-2 text-[11px] text-[var(--ink-3)] dark:border-white/10">
+                    <span>积分余额</span>
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--ink-1)]">
+                        <CreditSymbol className="text-[var(--brand-600)]" />
+                        {formatCreditAmount(user.pointsBalance)}
+                    </span>
+                </div>
+            </div>
+
+            <div className="mt-2 flex flex-col">
+                {rows.map((row) => {
+                    const Icon = row.icon;
+                    return (
+                        <button
+                            key={row.key}
+                            type="button"
+                            className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2 text-left text-[12.5px] font-medium text-[var(--ink-1)] transition hover:bg-[var(--surface-soft)]"
+                            onClick={() => onNavigate(row.href)}
+                        >
+                            <Icon className="size-4 shrink-0 text-[var(--ink-3)]" />
+                            {row.label}
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div className="mt-2 border-t border-[var(--hairline)] pt-2">
+                <button
+                    type="button"
+                    className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2 text-left text-[12.5px] font-medium text-rose-600 transition hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30"
+                    onClick={onLogout}
+                >
+                    <LogOut className="size-4 shrink-0" />
+                    退出登录
+                </button>
+            </div>
         </div>
     );
 }

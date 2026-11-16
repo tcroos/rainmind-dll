@@ -30,7 +30,7 @@ type CanvasStore = {
     hydrate: (force?: boolean, page?: number, keyword?: string) => Promise<void>;
     searchProjects: (keyword: string) => Promise<void>;
     loadProject: (id: string, force?: boolean) => Promise<CanvasProject>;
-    createProject: (title?: string) => Promise<string>;
+    createProject: (title?: string, options?: { insertIntoList?: boolean }) => Promise<string>;
     importProject: (project: Partial<CanvasProject>, sourceHandoffId?: string) => Promise<string>;
     renameProject: (id: string, title: string) => void;
     deleteProjects: (ids: string[]) => Promise<void>;
@@ -132,14 +132,17 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         projectRequests.set(key, request);
         return request;
     },
-    createProject: async (title = "未命名画布") => {
+    createProject: async (title = "未命名画布", options) => {
         const session = requireSession();
         const project = await createCanvasProject({ title });
         assertCurrent(session);
+        /* 建完就跳进画布的入口（新建 / 导入后进入）不该把卡片插进列表：
+         * 插进去只会让列表在跳转前一帧多出一个「空画布」，看着像点了没反应又冒了个卡片。 */
+        const insertIntoList = options?.insertIntoList !== false;
         set((state) => ({
             projects: [project, ...state.projects.filter((item) => item.id !== project.id)],
-            summaries: state.summaryPage === 1 ? upsertSummary(state.summaries, project).slice(0, state.summaryPageSize) : state.summaries,
-            summaryTotal: state.summaryTotal + (state.summaries.some((item) => item.id === project.id) ? 0 : 1),
+            summaries: insertIntoList && state.summaryPage === 1 ? upsertSummary(state.summaries, project).slice(0, state.summaryPageSize) : state.summaries,
+            summaryTotal: insertIntoList ? state.summaryTotal + (state.summaries.some((item) => item.id === project.id) ? 0 : 1) : state.summaryTotal,
             saveStateByProject: { ...state.saveStateByProject, [project.id]: { status: "saved" } },
             syncError: undefined,
         }));
