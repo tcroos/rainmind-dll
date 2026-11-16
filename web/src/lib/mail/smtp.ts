@@ -36,8 +36,46 @@ export async function sendSmtpTestMail({ mail, to, siteTitle }: SendTestMailInpu
     });
 }
 
-export async function sendSmtpMail({ mail, to, subject, text, siteTitle }: SendSmtpMailInput) {
+/** 至少要填服务器、账号、授权码，并且发件地址是合法邮箱，才算真正能发信；
+ * 只填了 host 或账号不是邮箱的配置，会被判定为「尚未配置」，避免前端收到假成功。 */
+export function isMailServiceConfigured(mail: MailSettings) {
+    const fromEmail = (mail.fromEmail || mail.username).trim();
+    return Boolean(mail.host.trim() && mail.username.trim() && mail.password && isEmail(fromEmail));
+}
+
+/** 只做连接、EHLO 和 AUTH，不发信：用于验证码发送前确认邮件服务真的可用。
+ * 未配置或授权码失效时把 SMTP 的真实错误抛出来，避免前端误报「已发送」。 */
+export async function verifySmtpConnection(mail: MailSettings) {
     const host = mail.host.trim();
+    const port = Number(mail.port) || 465;
+    const username = mail.username.trim();
+    const password = mail.password;
+    const fromEmail = (mail.fromEmail || username).trim();
+
+    if (!host) throw new Error("请填写 SMTP 服务器");
+    if (!username) throw new Error("请填写邮箱账号");
+    if (!password) throw new Error("请填写授权码或密码");
+    if (!isEmail(fromEmail)) throw new Error("发件邮箱格式不正确");
+
+    const client = await SmtpClient.connect({ host, port, secure: mail.secure });
+    try {
+        await client.expect([220]);
+        const ehlo = await client.command(`EHLO ${smtpDomain(fromEmail)}`, [250]);
+        if (!mail.secure && /\bSTARTTLS\b/i.test(ehlo.text)) {
+            await client.command("STARTTLS", [220]);
+            await client.upgradeToTls(host);
+            await client.command(`EHLO ${smtpDomain(fromEmail)}`, [250]);
+        }
+        await client.command("AUTH LOGIN", [334]);
+        await client.command(Buffer.from(username, "utf8").toString("base64"), [334]);
+        await client.command(Buffer.from(password, "utf8").toString("base64"), [235]);
+        await client.command("QUIT", [221]).catch(() => undefined);
+    } finally {
+        client.close();
+    }
+}
+
+export async function sendSmtpMail({ mail, to, subject, text, siteTitle }: SendSmtpMailInput) {    const host = mail.host.trim();
     const port = Number(mail.port) || 465;
     const username = mail.username.trim();
     const password = mail.password;

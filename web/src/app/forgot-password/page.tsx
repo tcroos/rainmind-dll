@@ -23,9 +23,9 @@ export default function ForgotPasswordPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ purpose: "password-reset", email }),
             });
-            const payload = (await response.json()) as { error?: string };
-            if (!response.ok) throw new Error(payload.error || "验证码发送失败");
-            message.success("验证码已发送，请查看邮箱");
+            const payload = (await response.json()) as { ok?: boolean; delivered?: boolean; error?: string };
+            if (!response.ok || payload.ok !== true) throw new Error(payload.error || "验证码发送失败");
+            message.success(payload.delivered === false ? "如果该邮箱已注册，验证码会发送到邮箱" : "验证码已发送，请查看邮箱");
         } catch (error) {
             message.error(error instanceof Error ? error.message : "验证码发送失败");
         } finally {
