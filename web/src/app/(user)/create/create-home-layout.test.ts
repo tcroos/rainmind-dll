@@ -41,11 +41,11 @@ describe("create Agent home layout", () => {
         expect(sidePanel).toContain('role="dialog"');
         expect(sidePanel).toContain("var(--announcement-drawer-width, 340px)");
         expect(sidePanel).toContain("fixed inset-0 z-40");
-        const pageTools = page.match(/className="([^"]+)" data-testid="creative-page-tools"/)?.[1] || "";
-        expect(pageTools).toContain("absolute");
-        expect(pageTools).toContain("top-3");
-        expect(pageTools).not.toContain("h-14");
-        expect(pageTools).not.toContain("bg-");
+        // 工具组是浮在右上角的图标行，进对话才显示（主页不出现历史 / 资产）
+        expect(page).toContain('data-testid="creative-page-tools"');
+        expect(page).toContain('!showConversation && "hidden"');
+        expect(page).toContain("absolute right-3 top-3 z-30 flex items-center gap-0.5");
+        expect(page).not.toContain('data-testid="creative-page-tools" className="h-14');
         expect(page).not.toContain("w-[320px]");
         expect(conversationList).toContain('className="flex h-9 w-full');
         expect(conversationList).toContain("group relative flex min-h-10");

@@ -891,6 +891,14 @@
     border-color: rgba(255, 255, 255, 0.13);
 }
 
+/* affix wrapper 里还有一层 input：两层 3% 白叠起来是 6%，
+ * 在深色底上会在文字背后显出一条比外框亮的横带。内层一律透明，只由 wrapper 出底色。 */
+.auth-page-card .ant-input-affix-wrapper > input.ant-input,
+.auth-page-card .ant-input-affix-wrapper input.ant-input:hover,
+.auth-page-card .ant-input-affix-wrapper input.ant-input:focus {
+    background: transparent;
+}
+
 .dark .auth-page-card .ant-input-affix-wrapper:focus-within,
 .dark .auth-page-card .ant-input:focus {
     border-color: rgba(255, 255, 255, 0.5);

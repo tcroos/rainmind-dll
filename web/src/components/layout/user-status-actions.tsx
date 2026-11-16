@@ -13,7 +13,7 @@ import { BillingPlansModal } from "@/components/billing/billing-plans-modal";
 import { AnnouncementNotificationCenter } from "@/components/layout/announcement-notification-center";
 import { CreditSymbol, formatCreditAmount } from "@/constant/credits";
 import { cn } from "@/lib/utils";
-import { userAvatarFallback } from "@/lib/user-avatar";
+import { userAvatarInitial } from "@/lib/user-avatar";
 import { canvasThemes } from "@/lib/canvas-theme";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { useUserStore, type LocalUser } from "@/stores/use-user-store";
@@ -55,7 +55,9 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
     const naturalIconClass = variant === "canvas" ? canvasIconClass : cn(defaultControlClass, "w-8 px-0 [&_svg]:size-4");
     const iconStyle: CSSProperties | undefined = variant === "canvas" ? canvasControlStyle : undefined;
     const avatarUrl = user?.avatarUrl?.trim();
-    const avatarFallback = userAvatarFallback(user?.displayName || user?.username || "用户");
+    /* 默认头像：一个字 + 品牌橙渐变。原来的「两个汉字 + 灰底」在 32px 里
+     * 既挤又像本地开发的占位图，尤其是深色态那块白圆。 */
+    const avatarInitial = userAvatarInitial(user?.displayName || user?.username || "用户");
     const accountName = user?.displayName || user?.username || "用户";
     const accountSecondary = user ? `ID：${user.accountId}` : "";
     const planActionLabel = user?.hasActivePlan ? "续费套餐" : "升级套餐";
@@ -68,7 +70,7 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
                         {avatarUrl ? (
                             <img src={avatarUrl} alt="" className="size-9 rounded-lg object-cover" referrerPolicy="no-referrer" />
                         ) : (
-                            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#66758e] text-[11px] font-semibold text-white dark:bg-[#d8dee8] dark:text-[#252b33]">{avatarFallback}</span>
+                            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[linear-gradient(135deg,#f6b181_0%,#e2671f_100%)] text-[13px] font-semibold text-white ring-1 ring-black/5 dark:ring-white/15">{avatarInitial}</span>
                         )}
                         <div className="min-w-0 flex-1">
                             <div className="truncate text-sm font-semibold text-stone-950 dark:text-stone-100">{accountName}</div>
@@ -295,9 +297,9 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
                             ) : (
                                 <span
                                     aria-hidden="true"
-                                    className="user-avatar-fallback grid size-full place-items-center rounded-full bg-[#66758e] text-[11px] font-semibold leading-none text-white ring-1 ring-black/5 transition hover:bg-[#586983] dark:bg-[#d8dee8] dark:text-[#252b33] dark:ring-white/10 dark:hover:bg-white"
+                                    className="user-avatar-fallback grid size-full place-items-center rounded-full bg-[linear-gradient(135deg,#f6b181_0%,#e2671f_100%)] text-[12px] font-semibold leading-none text-white ring-1 ring-black/5 transition hover:brightness-105 dark:ring-white/15"
                                 >
-                                    {avatarFallback}
+                                    {avatarInitial}
                                 </span>
                             )}
                         </button>

@@ -129,6 +129,14 @@ describe("login page split layout", () => {
         expect(outside).toContain(".ant-modal.landing-auth-modal .auth-panel input:-webkit-autofill");
     });
 
+    it("keeps the inner input transparent so dark fields do not show a bright band", async () => {
+        const css = await read("src/app/styles/global-auth.css");
+
+        // wrapper 与内部 input 都刷 3% 白时，两层叠加变 6%，深色底上会显出一条亮带
+        expect(css).toContain(".auth-page-card .ant-input-affix-wrapper > input.ant-input");
+        expect(css).toContain("background: transparent;");
+    });
+
     it("drops the optional nickname and verifies the repeated password", async () => {
         const authForm = await read("src/components/auth/auth-form.tsx");
 

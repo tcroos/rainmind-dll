@@ -5,6 +5,12 @@ export function userAvatarFallback(value: string) {
     return Array.from(parts[0]).slice(0, 2).join("").toUpperCase();
 }
 
+/** 头像一个字足够了：两个汉字塞进 32px 圆里必然挤成一团。 */
+export function userAvatarInitial(value: string) {
+    const char = Array.from(value.trim())[0];
+    return char ? char.toUpperCase() : "U";
+}
+
 export function userAvatarUrl(userId: string, updatedAt?: string) {
     const id = userId.trim();
     if (!id) return "";

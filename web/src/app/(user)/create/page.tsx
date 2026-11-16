@@ -692,7 +692,8 @@ export default function CreatePage() {
             <div className="relative flex min-h-0 flex-1">
                 {/* 右侧浮层展开时给对话让出宽度，消息不会被面板压住 */}
                 <div className={cn("relative flex min-w-0 flex-1 flex-col transition-[padding] duration-200", (historyOpen || assetsOpen) && "lg:pr-[calc(var(--announcement-drawer-width,340px)+28px)]")}>
-                    <div className="pointer-events-none absolute right-3 top-3 z-30 flex items-center gap-0.5 sm:right-5" data-testid="creative-page-tools">
+                    {/* 主页只留首屏内容：历史 / 资产是「对话里」的工具，进了对话才出现 */}
+                    <div className={cn("pointer-events-none absolute right-3 top-3 z-30 flex items-center gap-0.5 sm:right-5", !showConversation && "hidden")} data-testid="creative-page-tools">
                         {hasConversation ? (
                             <Button
                                 type="text"
