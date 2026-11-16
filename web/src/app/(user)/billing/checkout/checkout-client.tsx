@@ -152,7 +152,7 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
             <main className="h-full min-h-0 overflow-y-auto bg-[#fafafa] px-3 py-4 sm:px-4 sm:py-8 dark:bg-[#0f1012]">
                 <div className="mx-auto max-w-xl rounded-xl border border-stone-200 bg-white p-4 text-center sm:rounded-3xl sm:p-8 dark:border-stone-800 dark:bg-stone-950">
                     <Empty description="套餐不存在或已下架" />
-                    <Link href="/profile?section=billing" className="mt-5 inline-flex text-sm font-semibold text-stone-700 hover:text-stone-950 dark:text-stone-300 dark:hover:text-white">
+                    <Link href="/wallet" className="mt-5 inline-flex text-sm font-semibold text-stone-700 hover:text-stone-950 dark:text-stone-300 dark:hover:text-white">
                         返回套餐中心
                     </Link>
                 </div>
@@ -165,7 +165,7 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
             <div className="mx-auto w-full max-w-6xl pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-[calc(2rem+env(safe-area-inset-bottom))]">
                 <header className="mb-2.5 flex items-center justify-between gap-2 sm:mb-5 sm:gap-4">
                     <Link
-                        href="/profile?section=billing"
+                        href="/wallet"
                         className="inline-flex h-9 items-center gap-2 rounded-lg border border-stone-200/80 bg-white px-3 text-[13px] font-medium text-stone-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-stone-300 hover:text-stone-950 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300 dark:hover:border-stone-700 dark:hover:text-white"
                     >
                         <ArrowLeft className="size-4" /> 返回套餐中心
@@ -384,7 +384,7 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                                         {checkout.kind === "manual" ? "查看订单说明" : "前往支付"}
                                     </Button>
                                 </div>
-                                <Link href="/profile?section=orders" className="mt-5 text-sm font-medium text-stone-500 hover:text-stone-950 dark:text-stone-400 dark:hover:text-white">
+                                <Link href="/wallet?section=orders" className="mt-5 text-sm font-medium text-stone-500 hover:text-stone-950 dark:text-stone-400 dark:hover:text-white">
                                     返回个人中心查看订单
                                 </Link>
                             </div>

@@ -31,6 +31,16 @@ describe("signing out of the workspace", () => {
         expect(tsx).not.toContain("accountItems");
     });
 
+    it("points the account panel at the wallet instead of a nested plan modal", async () => {
+        const tsx = await read("src/components/layout/user-status-actions.tsx");
+
+        // 充值入口统一在 /wallet，浮层里不再套一层套餐弹窗
+        expect(tsx).toContain('href: "/wallet"');
+        expect(tsx).toContain('href: "/help"');
+        expect(tsx).not.toContain("BillingPlansModal");
+        expect(tsx).not.toContain("购买积分与套餐");
+    });
+
     it("keeps the plan action readable on its dark pill", async () => {
         const tsx = await read("src/components/layout/user-status-actions.tsx");
 

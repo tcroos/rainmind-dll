@@ -2,13 +2,12 @@
 
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight, CreditCard, Crown, Gift, Globe, Keyboard, LogOut, ShieldCheck, UserCircle } from "lucide-react";
+import { ChevronRight, CircleHelp, CreditCard, Crown, Gift, Globe, Keyboard, LogOut, ShieldCheck, UserCircle, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { App, Button, Input, Popover } from "antd";
 
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
-import { BillingPlansModal } from "@/components/billing/billing-plans-modal";
 import { AnnouncementNotificationCenter } from "@/components/layout/announcement-notification-center";
 import { CreditSymbol, formatCreditAmount } from "@/constant/credits";
 import { cn } from "@/lib/utils";
@@ -30,7 +29,6 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
     const [pointsOpen, setPointsOpen] = useState(false);
     const [accountOpen, setAccountOpen] = useState(false);
     const [isCompactViewport, setIsCompactViewport] = useState(false);
-    const [plansOpen, setPlansOpen] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
     const storeUser = useUserStore((state) => state.user);
     const user = storeUser || initialUser || null;
@@ -136,10 +134,6 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
                         <PointsSummaryPanel
                             user={user}
                             onClose={() => setPointsOpen(false)}
-                            onUpgrade={() => {
-                                setPointsOpen(false);
-                                setPlansOpen(true);
-                            }}
                         />
                     }
                 >
@@ -180,10 +174,6 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
                                 onNavigate={(href) => {
                                     setAccountOpen(false);
                                     router.push(href);
-                                }}
-                                onUpgrade={() => {
-                                    setAccountOpen(false);
-                                    setPlansOpen(true);
                                 }}
                                 onLogout={() => {
                                     setAccountOpen(false);
@@ -228,18 +218,11 @@ export function UserStatusActions({ variant = "default", onOpenShortcuts, initia
                     <Keyboard className="size-4" />
                 </button>
             ) : null}
-            <BillingPlansModal
-                open={plansOpen}
-                onClose={() => setPlansOpen(false)}
-                onSelect={(product) => {
-                    router.push(`/billing/checkout?product=${encodeURIComponent(product.id)}`);
-                }}
-            />
         </div>
     );
 }
 
-function PointsSummaryPanel({ user, onClose, onUpgrade }: { user: LocalUser; onClose: () => void; onUpgrade: () => void }) {
+function PointsSummaryPanel({ user, onClose }: { user: LocalUser; onClose: () => void }) {
     const { message } = App.useApp();
     const setUser = useUserStore((state) => state.setUser);
     const [code, setCode] = useState("");
@@ -316,17 +299,16 @@ function PointsSummaryPanel({ user, onClose, onUpgrade }: { user: LocalUser; onC
             </div>
 
             <div className="mt-3.5 flex flex-col gap-1">
-                <Button
-                    block
-                    type="primary"
-                    icon={<CreditCard className="size-4" />}
-                    onClick={onUpgrade}
-                    className="points-summary-purchase !flex !h-9 !items-center !justify-center !gap-2 !rounded-lg !border-stone-950 !bg-stone-950 !px-3 !text-[12.5px] !font-semibold !text-white !shadow-none hover:!border-black hover:!bg-black hover:!text-white dark:!border-white dark:!bg-white dark:!text-stone-950 dark:hover:!border-stone-100 dark:hover:!bg-stone-100 dark:hover:!text-stone-950"
-                >
-                    购买积分与套餐
-                </Button>
                 <Link
-                    href="/profile?section=consume"
+                    href="/wallet"
+                    onClick={onClose}
+                    className="points-summary-purchase flex h-9 items-center justify-center gap-2 rounded-lg bg-[#18181b] px-3 text-[12.5px] font-semibold text-white transition hover:opacity-90 dark:bg-white dark:text-[#18181b]"
+                >
+                    <CreditCard className="size-4" />
+                    去钱包充值
+                </Link>
+                <Link
+                    href="/wallet?section=consume"
                     onClick={onClose}
                     className="flex h-9 items-center justify-between rounded-lg px-2 text-[12.5px] font-medium text-[var(--ink-2)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--ink-1)]"
                 >
@@ -348,14 +330,12 @@ function AccountMenuPanel({
     avatarUrl,
     avatarInitial,
     onNavigate,
-    onUpgrade,
     onLogout,
 }: {
     user: LocalUser;
     avatarUrl?: string;
     avatarInitial: string;
     onNavigate: (href: string) => void;
-    onUpgrade: () => void;
     onLogout: () => void;
 }) {
     const accountName = user.displayName || user.username || "用户";
@@ -363,7 +343,8 @@ function AccountMenuPanel({
     const planActionLabel = user.hasActivePlan ? "续费套餐" : "升级套餐";
     const rows = [
         { key: "profile", label: "个人中心", icon: UserCircle, href: "/profile" },
-        { key: "billing", label: "套餐中心", icon: CreditCard, href: "/profile?section=billing" },
+        { key: "wallet", label: "钱包", icon: Wallet, href: "/wallet" },
+        { key: "help", label: "帮助中心", icon: CircleHelp, href: "/help" },
         ...(user.role === "admin" ? [{ key: "admin", label: "管理员后台", icon: ShieldCheck, href: "/admin" }] : []),
         { key: "site", label: "官网首页", icon: Globe, href: "/" },
     ];
@@ -395,7 +376,7 @@ function AccountMenuPanel({
                            Tailwind 的 text-* 在 @layer 里会被它压掉，黑底黑字就这么来的。 */
                         style={{ color: "var(--surface-panel)" }}
                         className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md bg-[#18181b] px-2.5 text-[11px] font-semibold transition hover:opacity-90 dark:bg-[#ffffff]"
-                        onClick={onUpgrade}
+                        onClick={() => onNavigate("/wallet")}
                         aria-label={planActionLabel}
                         title={planActionLabel}
                     >

@@ -8,7 +8,7 @@ describe("personal homepage community activity", () => {
             readFile(resolve(process.cwd(), "src/app/(user)/me/community-activity-modal.tsx"), "utf8"),
             readFile(resolve(process.cwd(), "src/app/(user)/me/page.tsx"), "utf8"),
             readFile(resolve(process.cwd(), "src/app/(user)/profile/profile-elements.tsx"), "utf8"),
-            readFile(resolve(process.cwd(), "src/app/(user)/profile/page.tsx"), "utf8"),
+            readFile(resolve(process.cwd(), "src/app/(user)/profile/account-center.tsx"), "utf8"),
         ]);
 
         expect(activityModal).toContain("<Modal");

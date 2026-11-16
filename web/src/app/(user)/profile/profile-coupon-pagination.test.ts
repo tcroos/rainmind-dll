@@ -19,7 +19,7 @@ describe("profile coupon pagination", () => {
     });
 
     it("renders compact pagination only when the coupon total exceeds one page", async () => {
-        const [wallet, page] = await Promise.all([readFile(resolve(process.cwd(), "src/app/(user)/profile/profile-coupon-wallet.tsx"), "utf8"), readFile(resolve(process.cwd(), "src/app/(user)/profile/page.tsx"), "utf8")]);
+        const [wallet, page] = await Promise.all([readFile(resolve(process.cwd(), "src/app/(user)/profile/profile-coupon-wallet.tsx"), "utf8"), readFile(resolve(process.cwd(), "src/app/(user)/profile/account-center.tsx"), "utf8")]);
 
         expect(wallet).toContain("total > COUPON_PAGE_SIZE");
         expect(wallet).toContain("templatesTotal > COUPON_PAGE_SIZE");

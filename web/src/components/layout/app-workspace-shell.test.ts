@@ -13,7 +13,10 @@ describe("workspace sidebar", () => {
         expect(sidebar).toContain('expanded ? "w-52" : "w-[72px]"');
         expect(sidebar).toContain("hide-scrollbar min-h-0 flex-1 overflow-y-auto");
         expect(sidebar).not.toContain("thin-scrollbar min-h-0 flex-1 overflow-y-auto");
-        expect(sidebar).toContain('<CircleHelp className="size-5 shrink-0" />');
+        // 底部固定账号入口（帮助已收进个人中心），点它进个人中心
+        expect(sidebar).toContain('href="/profile"');
+        expect(sidebar).toContain("个人中心");
+        expect(sidebar).not.toContain('href="/help"');
         expect(sidebar).not.toContain("userAvatarFallback");
         expect(sidebar).not.toContain("workspaceUrl");
         expect(sidebar).not.toContain("window.location.host");
@@ -27,7 +30,8 @@ describe("workspace sidebar", () => {
         expect(sidebar).toContain('expanded ? "w-52" : "w-[72px]"');
         expect(sidebar).not.toContain('"w-44"');
         expect(sidebar).not.toContain('"w-48"');
-        expect(sidebar).toContain("h-12 items-center rounded-lg px-2 text-base");
+        // 12 个导航项要在 900px 高度内排完，行高从 48 收到 44，字号仍是 16px
+        expect(sidebar).toContain("h-11 items-center rounded-lg px-2 text-base");
         expect(sidebar).toContain("text-[13px] font-normal text-[var(--ink-3)]");
         expect(sidebar).toContain("text-[17px] font-semibold");
         expect(sidebar).toContain("size-5 shrink-0");

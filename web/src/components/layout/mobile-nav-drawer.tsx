@@ -1,16 +1,18 @@
 "use client";
 
 import { Drawer } from "antd";
-import { CircleHelp, Globe } from "lucide-react";
+import { ExternalLink, Globe } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { SiteLogo } from "@/components/layout/site-logo";
-import { navigationGroups, navigationTools, type NavigationToolSlug } from "@/constant/navigation-tools";
+import { isExternalTool, navigationGroups, navigationToolHref, navigationTools, type NavigationToolSlug } from "@/constant/navigation-tools";
+import { userAvatarInitial } from "@/lib/user-avatar";
 import { cn } from "@/lib/utils";
 import { DEFAULT_SITE_TITLE, resolveSiteTitle } from "@/lib/site-brand";
 import { usePublicSessionStore } from "@/stores/use-public-session-store";
+import { useUserStore } from "@/stores/use-user-store";
 
 type MobileNavDrawerProps = {
     open: boolean;
@@ -24,7 +26,18 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
     const previousPathnameRef = useRef(pathname);
     const site = usePublicSessionStore((state) => state.payload?.settings?.site) || { title: DEFAULT_SITE_TITLE, logoUrl: "/logo.svg" };
     const siteTitle = resolveSiteTitle(site.title);
-    const helpActive = pathname.startsWith("/help");
+    const user = useUserStore((state) => state.user);
+    const avatarUrl = user?.avatarUrl?.trim();
+    const accountName = user?.displayName || user?.username || "未登录";
+    const avatarInitial = userAvatarInitial(accountName);
+    const accountActive = pathname.startsWith("/profile");
+    const itemClass = (active: boolean) =>
+        cn(
+            "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-base transition",
+            active
+                ? "bg-[#f0f2f4] font-medium text-[#1d2127] dark:bg-[#22262c] dark:text-[#f3f5f7]"
+                : "text-[#697381] hover:bg-[#f3f5f7] hover:text-[#20242a] dark:text-[#9aa3af] dark:hover:bg-[#20242a] dark:hover:text-[#f3f5f7]",
+        );
 
     useEffect(() => {
         if (previousPathnameRef.current === pathname) return;
@@ -56,32 +69,53 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
                             .map((tool) => {
                                 const Icon = tool.icon;
                                 const active = tool.slug === activeToolSlug;
-                                return (
-                                    <Link
-                                        key={tool.slug}
-                                        href={`/${tool.slug}`}
-                                        prefetch
-                                        onMouseEnter={() => router.prefetch(`/${tool.slug}`)}
-                                        onFocus={() => router.prefetch(`/${tool.slug}`)}
-                                        onClick={onClose}
-                                        className={cn(
-                                            "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-base transition",
-                                            active
-                                                ? "bg-[#f0f2f4] font-medium text-[#1d2127] dark:bg-[#22262c] dark:text-[#f3f5f7]"
-                                                : "text-[#697381] hover:bg-[#f3f5f7] hover:text-[#20242a] dark:text-[#9aa3af] dark:hover:bg-[#20242a] dark:hover:text-[#f3f5f7]",
-                                        )}
-                                        aria-current={active ? "page" : undefined}
-                                    >
+                                const external = isExternalTool(tool);
+                                const href = navigationToolHref(tool);
+                                const inner = (
+                                    <>
                                         <Icon className="size-5 shrink-0" />
                                         <span className="min-w-0 flex-1 truncate">{tool.label}</span>
-                                        <span className={cn("size-1.5 rounded-full", active ? "bg-current" : "bg-transparent")} />
+                                        {external ? <ExternalLink className="size-3.5 shrink-0 opacity-60" /> : <span className={cn("size-1.5 rounded-full", active ? "bg-current" : "bg-transparent")} />}
+                                    </>
+                                );
+                                return external ? (
+                                    <a key={tool.slug} href={href} target="_blank" rel="noreferrer noopener" className={itemClass(false)}>
+                                        {inner}
+                                    </a>
+                                ) : (
+                                    <Link
+                                        key={tool.slug}
+                                        href={href}
+                                        prefetch
+                                        onMouseEnter={() => router.prefetch(href)}
+                                        onFocus={() => router.prefetch(href)}
+                                        onClick={onClose}
+                                        className={itemClass(active)}
+                                        aria-current={active ? "page" : undefined}
+                                    >
+                                        {inner}
                                     </Link>
                                 );
                             })}
                     </div>
                 </div>
             ))}
-            <div className="mt-5 border-t border-border pt-4">
+            <div className="mt-5 space-y-1 border-t border-border pt-4">
+                <Link
+                    href="/profile"
+                    prefetch
+                    onMouseEnter={() => router.prefetch("/profile")}
+                    onFocus={() => router.prefetch("/profile")}
+                    onClick={onClose}
+                    className={itemClass(accountActive)}
+                    aria-current={accountActive ? "page" : undefined}
+                >
+                    <span className="grid size-6 shrink-0 place-items-center overflow-hidden rounded-full bg-[linear-gradient(135deg,#f6b181_0%,#e2671f_100%)] text-[10px] font-semibold text-white ring-1 ring-black/5 dark:ring-white/15">
+                        {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" referrerPolicy="no-referrer" /> : avatarInitial}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">个人中心</span>
+                    <span className={cn("size-1.5 rounded-full", accountActive ? "bg-current" : "bg-transparent")} />
+                </Link>
                 <Link
                     href="/"
                     prefetch
@@ -93,22 +127,6 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
                     <Globe className="size-5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">官网首页</span>
                     <span className="size-1.5 rounded-full bg-transparent" />
-                </Link>
-                <Link
-                    href="/help"
-                    prefetch
-                    onMouseEnter={() => router.prefetch("/help")}
-                    onFocus={() => router.prefetch("/help")}
-                    onClick={onClose}
-                    className={cn(
-                        "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-base transition",
-                        helpActive ? "bg-[#f0f2f4] font-medium text-[#1d2127] dark:bg-[#22262c] dark:text-[#f3f5f7]" : "text-[#697381] hover:bg-[#f3f5f7] hover:text-[#20242a] dark:text-[#9aa3af] dark:hover:bg-[#20242a] dark:hover:text-[#f3f5f7]",
-                    )}
-                    aria-current={helpActive ? "page" : undefined}
-                >
-                    <CircleHelp className="size-5 shrink-0" />
-                    <span className="min-w-0 flex-1 truncate">帮助</span>
-                    <span className={cn("size-1.5 rounded-full", helpActive ? "bg-current" : "bg-transparent")} />
                 </Link>
             </div>
         </Drawer>

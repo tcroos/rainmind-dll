@@ -17,6 +17,7 @@ import { usePublicSessionStore } from "@/stores/use-public-session-store";
 
 const PAGE_TITLES: Record<string, string> = {
     billing: "充值中心",
+    wallet: "钱包",
     help: "帮助中心",
     profile: "个人中心",
 };

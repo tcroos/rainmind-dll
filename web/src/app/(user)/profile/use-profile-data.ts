@@ -184,14 +184,20 @@ export function useProfileData(activeSection: ProfileSectionKey) {
         [message],
     );
 
-    const needsOrders = activeSection === "overview" || activeSection === "orders";
-    const ordersTargetPage = activeSection === "overview" ? 1 : ordersPage;
-    const needsPoints = activeSection === "overview" || activeSection === "points";
-    const pointsTargetPage = activeSection === "overview" ? 1 : pointRecordsPage;
+    /* 钱包概览一屏要「余额 + 套餐」，所以它同时需要 products / orders / points；
+     * 个人中心的概览只剩账号信息，不再顺带拉账本。 */
+    const walletOverview = activeSection === "wallet";
+    const needsProducts = activeSection === "billing" || walletOverview;
+    const needsOrders = activeSection === "orders" || walletOverview;
+    const ordersTargetPage = activeSection === "orders" ? ordersPage : 1;
+    const needsPoints = activeSection === "points" || walletOverview;
+    const pointsTargetPage = activeSection === "points" ? pointRecordsPage : 1;
+    const needsConsume = activeSection === "consume" || walletOverview;
+    const consumeTargetPage = activeSection === "consume" ? consumeRecordsPage : 1;
 
     useEffect(() => {
-        if (activeSection === "billing" && !productsLoaded) void loadProducts();
-    }, [activeSection, loadProducts, productsLoaded]);
+        if (needsProducts && !productsLoaded) void loadProducts();
+    }, [loadProducts, needsProducts, productsLoaded]);
 
     useEffect(() => {
         if (activeSection === "coupons" && couponsLoadedPage !== couponsPage) void loadCoupons(couponsPage);
@@ -206,8 +212,8 @@ export function useProfileData(activeSection: ProfileSectionKey) {
     }, [loadPointRecords, needsPoints, pointRecordsLoadedPage, pointsTargetPage]);
 
     useEffect(() => {
-        if (activeSection === "consume" && consumeRecordsLoadedPage !== consumeRecordsPage) void loadConsumeRecords(consumeRecordsPage);
-    }, [activeSection, consumeRecordsLoadedPage, consumeRecordsPage, loadConsumeRecords]);
+        if (needsConsume && consumeRecordsLoadedPage !== consumeTargetPage) void loadConsumeRecords(consumeTargetPage);
+    }, [needsConsume, consumeRecordsLoadedPage, consumeTargetPage, loadConsumeRecords]);
 
     const refreshUser = useCallback(async () => {
         try {
@@ -223,7 +229,7 @@ export function useProfileData(activeSection: ProfileSectionKey) {
         setRefreshing(true);
         try {
             const requests: Promise<void>[] = [refreshUser()];
-            if (activeSection === "overview") requests.push(loadOrders(1), loadPointRecords(1));
+            if (walletOverview) requests.push(loadProducts(), loadOrders(1), loadPointRecords(1), loadConsumeRecords(1));
             else if (activeSection === "billing") requests.push(loadProducts());
             else if (activeSection === "coupons") requests.push(loadCoupons(couponsPage));
             else if (activeSection === "orders") requests.push(loadOrders(ordersPage));
@@ -233,7 +239,7 @@ export function useProfileData(activeSection: ProfileSectionKey) {
         } finally {
             setRefreshing(false);
         }
-    }, [activeSection, consumeRecordsPage, couponsPage, loadConsumeRecords, loadCoupons, loadOrders, loadPointRecords, loadProducts, ordersPage, pointRecordsPage, refreshUser]);
+    }, [activeSection, consumeRecordsPage, couponsPage, loadConsumeRecords, loadCoupons, loadOrders, loadPointRecords, loadProducts, ordersPage, pointRecordsPage, refreshUser, walletOverview]);
 
     const refreshCoupons = useCallback(() => loadCoupons(couponsPage, { refreshTemplates: true, templatePage: couponTemplatesPage }), [couponTemplatesPage, couponsPage, loadCoupons]);
     const changeCouponTemplatePage = useCallback(
@@ -251,7 +257,7 @@ export function useProfileData(activeSection: ProfileSectionKey) {
     }, [loadCoupons]);
 
     return {
-        products: { items: products, loading: productsLoading || (activeSection === "billing" && !productsLoaded), refresh: loadProducts },
+        products: { items: products, loading: productsLoading || (needsProducts && !productsLoaded), refresh: loadProducts },
         coupons: {
             items: coupons,
             templates: couponTemplates,
@@ -272,7 +278,7 @@ export function useProfileData(activeSection: ProfileSectionKey) {
             total: consumeRecordsTotal,
             page: consumeRecordsPage,
             setPage: setConsumeRecordsPage,
-            loading: consumeRecordsLoading || (activeSection === "consume" && consumeRecordsLoadedPage !== consumeRecordsPage),
+            loading: consumeRecordsLoading || (needsConsume && consumeRecordsLoadedPage !== consumeTargetPage),
         },
         loading: refreshing || productsLoading || couponsLoading || ordersLoading || pointRecordsLoading || consumeRecordsLoading,
         refresh,
