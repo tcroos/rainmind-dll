@@ -1,17 +1,16 @@
 /* 首屏：单列布局，形态 1:1 对齐 Megick /official。
  * 所有颜色集中在 .hero 变量里，下一轮换配色只改这一段。 */
 .hero {
-    /* 与 home.module.css 的 --brand-* 同源：之前这里是 #20242a（冷灰黑）
-     * 配 #e2671f，而全站正文是 #1b1812（暖棕黑）+ #a05f0b，
-     * 冷暖两套色在同一屏里会显得「说不上哪里脏」。 */
-    --hero-text-primary: #1b1812;
-    --hero-text-secondary: rgba(27, 24, 18, 0.72);
-    --hero-text-faint: rgba(27, 24, 18, 0.5);
-    --hero-border: rgba(27, 24, 18, 0.12);
+    /* 与 home.module.css 的 --brand-* 同源；正文改中性黑灰，
+     * 避免暖棕文字在纯白底上又带出「发黄」的观感。 */
+    --hero-text-primary: #16161a;
+    --hero-text-secondary: rgba(22, 22, 26, 0.72);
+    --hero-text-faint: rgba(22, 22, 26, 0.5);
+    --hero-border: rgba(20, 20, 24, 0.1);
     --hero-accent: #e2671f;
     --hero-accent-hover: #c95616;
     --hero-accent-soft: rgba(226, 103, 31, 0.1);
-    --hero-accent-glow: rgba(226, 103, 31, 0.24);
+    --hero-accent-glow: rgba(226, 103, 31, 0.16);
     --hero-accent-foreground: #ffffff;
     --hero-surface: #ffffff;
     --hero-glass: rgba(255, 255, 255, 0.62);

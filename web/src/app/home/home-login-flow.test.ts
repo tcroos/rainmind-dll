@@ -45,14 +45,14 @@ describe("marketing page login flow", () => {
         expect(header).not.toContain("立即体验");
     });
 
-    it("moves the navigation to the right and links API plus contact", async () => {
+    it("keeps the navigation short and links API plus contact", async () => {
         const data = await read("src/app/home/home-data.ts");
 
-        expect(data).toContain('{ label: "作品广场", href: "/gallery", action: "link" }');
+        expect(data).toContain('{ label: "作品", href: "/gallery", action: "link" }');
         expect(data).toContain('{ label: "API", href: "https://api.rainmind.net/", action: "external" }');
-        expect(data).toContain('{ label: "价格", href: "/billing", action: "billing" }');
-        expect(data).toContain('{ label: "联系我们", href: "#contact", action: "contact" }');
+        expect(data).toContain('{ label: "定价", href: "/billing", action: "billing" }');
         expect(data).toContain('{ label: "关于", href: "/about", action: "link" }');
+        expect(data).toContain('{ label: "联系", href: "#contact", action: "contact" }');
         expect(data).not.toContain('label: "AI 创作"');
         expect(data).not.toContain('label: "短剧制作"');
 

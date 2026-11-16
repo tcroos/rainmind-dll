@@ -74,7 +74,7 @@ void main() {
     vec3 swirlB = srgbToLinear(uTheme < 0.5 ? vec3(0.941) : vec3(0.055, 0.043, 0.020));       // #f0f0f0 / #0e0b05
     vec3 baseColor = srgbToLinear(uTheme < 0.5 ? vec3(1.0) : vec3(0.082, 0.067, 0.027));      // #ffffff / #151107
     // 液态玻璃的 accent 与 home.module.css 的 --brand-500 保持同一个值：
-    // 原版是纯饱和橙 #ff5f03，和页面上的 #e2671f / #a05f0b 并排会显得「荧光」。
+    // 深色态沿用金色（用户指定保留），浅色态用品牌橙。
     vec3 accent = srgbToLinear(uTheme < 0.5 ? vec3(0.886, 0.404, 0.122) : vec3(0.910, 0.706, 0.290)); // #e2671f / #e8b44a
 
     vec3 swirl = mix(swirlA, swirlB, blendFactor) * shimmer;
