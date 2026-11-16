@@ -34,12 +34,13 @@ describe("create Agent home layout", () => {
         expect(page).toContain("resizeObserver.observe(content)");
         expect(messages).toContain('data-testid="creative-message-list"');
         expect(messages).toContain("[assets.length, followLatest, lastMessageId, loading]");
-        // 历史记录改成右侧浮层（位置/宽度对齐消息中心），点面板外也会关闭
-        expect(page).toContain('role="dialog"');
-        expect(page).toContain('aria-label="创作历史"');
-        expect(page).toContain("fixed inset-0 z-40");
-        expect(page).toContain("var(--announcement-drawer-width, 340px)");
+        // 历史与资产共用 CreateSidePanel：几何在组件里，页面只负责挂载
+        expect(page).toContain('<CreateSidePanel open={historyOpen} title="创作历史"');
         expect(page).toContain("aria-expanded={historyOpen}");
+        const sidePanel = await readFile(resolve(process.cwd(), "src/app/(user)/create/components/create-side-panel.tsx"), "utf8");
+        expect(sidePanel).toContain('role="dialog"');
+        expect(sidePanel).toContain("var(--announcement-drawer-width, 340px)");
+        expect(sidePanel).toContain("fixed inset-0 z-40");
         const pageTools = page.match(/className="([^"]+)" data-testid="creative-page-tools"/)?.[1] || "";
         expect(pageTools).toContain("absolute");
         expect(pageTools).toContain("top-3");

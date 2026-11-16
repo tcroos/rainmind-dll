@@ -26,6 +26,7 @@ import { CreativeAssetsPanel } from "./components/creative-assets-panel";
 import { applyAgentGenerationCapability, shouldShowVideoFrameControls } from "./components/creative-composer-video-mode";
 import { CreativeConversationList } from "./components/creative-conversation-list";
 import { CreateInspirationGallery } from "./components/create-inspiration-gallery";
+import { CreateSidePanel } from "./components/create-side-panel";
 import { CreativeEmptyChat } from "./components/creative-empty-chat";
 import { CreativeMessages } from "./components/creative-messages";
 import { CreateWorkbenchOverview } from "./components/create-workbench-overview";
@@ -79,6 +80,10 @@ export default function CreatePage() {
      * 这样侧栏点 Agent（/create 无参数）就能回到主页。 */
     const searchKey = searchParams.toString();
     const newChatMode = searchParams.get("new") === "1";
+    /* 点「新建对话」后消息立刻被清空，但 URL 还要等 router.replace 生效。
+     * 中间这一两帧 hasConversation 已经是 false、newChatMode 还没来，
+     * 会把主页渲染出来闪一下。用本地标记把这几十毫秒盖住。 */
+    const [newChatPending, setNewChatPending] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);
     const [assetsOpen, setAssetsOpen] = useState(false);
     const [awayFromLatest, setAwayFromLatest] = useState(false);
@@ -98,7 +103,7 @@ export default function CreatePage() {
     const openAgentConversation = agent.openConversation;
     const newAgentConversation = agent.newConversation;
     const hasConversation = agent.messages.length > 0;
-    const showConversation = hasConversation || agent.conversationLoading || newChatMode;
+    const showConversation = hasConversation || agent.conversationLoading || newChatMode || newChatPending;
     showConversationRef.current = showConversation;
     homeDockedRef.current = homeDocked;
     const selectedSkill = skills.find((skill) => skill.id === selectedSkillId);
@@ -165,10 +170,16 @@ export default function CreatePage() {
         const previous = previousSearchKeyRef.current;
         previousSearchKeyRef.current = searchKey;
         if (searchKey || !previous) return;
+        setNewChatPending(false);
         newAgentConversation();
         setHistoryOpen(false);
         setAssetsOpen(false);
     }, [newAgentConversation, searchKey]);
+
+    // URL 已经切到 ?new=1，本地标记就可以撤掉，后续完全由路由驱动
+    useEffect(() => {
+        if (newChatMode) setNewChatPending(false);
+    }, [newChatMode]);
 
     useEffect(() => {
         previousScrollTopRef.current = 0;
@@ -256,6 +267,8 @@ export default function CreatePage() {
 
     /* 「新建对话」= 清空当前消息、留在对话视图并显示引导，不退回主页 */
     const newConversation = () => {
+        // 先立标记再清消息，避免清空到路由生效之间闪一帧主页
+        setNewChatPending(true);
         newAgentConversation();
         setHistoryOpen(false);
         setAssetsOpen(false);
@@ -632,18 +645,10 @@ export default function CreatePage() {
         />
     );
 
-    /* 历史记录改成右侧浮层：位置、宽度、圆角、投影全部对齐「消息中心」那套抽屉，
-     * 不再从左侧挤出一列把对话推走。点 × 或点面板外的任意位置都会关闭。 */
-    const historyPanel = (
-        <div className="flex h-14 shrink-0 items-center gap-2 px-4">
-            <History className="size-4 text-[var(--ink-2)]" />
-            <h2 className="min-w-0 flex-1 text-sm font-semibold text-[#20242a] dark:text-[#f3f5f7]">创作历史</h2>
-            <Button type="text" shape="circle" icon={<X className="size-4" />} onClick={() => setHistoryOpen(false)} aria-label="关闭创作历史" title="关闭创作历史" />
-        </div>
-    );
-
+    /* 历史记录用统一的右侧浮层外壳：位置、宽度、圆角、投影对齐「消息中心」，
+     * 点 × 或面板外任意位置都会关闭。 */
     const historyList = (
-        <div className="min-h-0 flex-1">
+        <div className="flex h-full min-h-0 flex-col pt-1">
             <CreativeConversationList
                 items={agent.conversations}
                 activeId={agent.conversationId}
@@ -686,7 +691,7 @@ export default function CreatePage() {
             <CreateDotField />
             <div className="relative flex min-h-0 flex-1">
                 {/* 右侧浮层展开时给对话让出宽度，消息不会被面板压住 */}
-                <div className={cn("relative flex min-w-0 flex-1 flex-col transition-[padding] duration-200", historyOpen && "lg:pr-[calc(var(--announcement-drawer-width,340px)+28px)]")}>
+                <div className={cn("relative flex min-w-0 flex-1 flex-col transition-[padding] duration-200", (historyOpen || assetsOpen) && "lg:pr-[calc(var(--announcement-drawer-width,340px)+28px)]")}>
                     <div className="pointer-events-none absolute right-3 top-3 z-30 flex items-center gap-0.5 sm:right-5" data-testid="creative-page-tools">
                         {hasConversation ? (
                             <Button
@@ -925,26 +930,9 @@ export default function CreatePage() {
                 }}
             />
 
-            {historyOpen ? (
-                <>
-                    {/* 透明遮罩：点面板外的任意位置都会关闭，但不压暗对话内容 */}
-                    <div className="fixed inset-0 z-40" onClick={() => setHistoryOpen(false)} aria-hidden="true" />
-                    <section
-                        role="dialog"
-                        aria-label="创作历史"
-                        className="fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--surface-panel)] shadow-[0_24px_56px_-20px_rgba(17,20,28,0.28),0_2px_10px_-4px_rgba(17,20,28,0.12)] dark:shadow-[0_24px_56px_-18px_rgba(0,0,0,0.72)]"
-                        style={{
-                            top: "var(--announcement-drawer-top, 116px)",
-                            right: "var(--announcement-drawer-right, 16px)",
-                            bottom: "var(--announcement-drawer-bottom, 32px)",
-                            width: "min(calc(100vw - 24px), var(--announcement-drawer-width, 340px))",
-                        }}
-                    >
-                        {historyPanel}
-                        {historyList}
-                    </section>
-                </>
-            ) : null}
+            <CreateSidePanel open={historyOpen} title="创作历史" icon={<History className="size-4" />} onClose={() => setHistoryOpen(false)}>
+                {historyList}
+            </CreateSidePanel>
         </main>
     );
 }

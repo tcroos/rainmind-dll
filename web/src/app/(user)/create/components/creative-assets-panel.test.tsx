@@ -96,15 +96,14 @@ describe("CreativeAssetsPanel", () => {
         expect(markup).not.toContain('data-testid="creative-conversation-video-assets"');
         expect(markup).toContain("图片");
         expect(markup).toContain("视频");
-        expect(markup).toContain("grid-cols-4");
-        expect(markup).toContain("border-[var(--ink-1)]");
+        // 面板宽度只有 340，三列才看得清缩略图
+        expect(markup).toContain("grid-cols-3");
+        expect(markup).toContain("ring-[var(--ink-1)]");
         expect(markup).toContain('data-testid="creative-asset-reference-action"');
         expect(markup).toContain('aria-label="取消引用参考图"');
         expect(markup).toContain("已引用</button>");
         const referenceActionClass = markup.match(/data-testid="creative-asset-reference-action" class="([^"]+)"/)?.[1] || "";
-        expect(referenceActionClass).toContain("gap-1");
-        expect(referenceActionClass).toContain("!bg-transparent");
-        expect(referenceActionClass).toContain("!text-[11px]");
+        expect(referenceActionClass).toContain("text-[11px]");
         expect(markup).not.toContain("勾选");
     });
 });

@@ -1,14 +1,17 @@
 "use client";
 
-import { Button, Drawer, Dropdown, Grid, Input, Modal, Spin, Tabs, Tooltip } from "antd";
+import { Button, Dropdown, Input, Modal, Spin, Tooltip } from "antd";
 import { AtSign, ChevronDown, CornerDownLeft, FileVideo, ImageIcon, LibraryBig, ListFilter, Play, RefreshCw, Search, Sparkles, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { LazyMediaImage } from "@/components/media/lazy-media-image";
 import type { CreativeAsset } from "@/lib/creative-runtime-contract";
 import { imagePreviewUrl } from "@/lib/media-image-url";
+import { cn } from "@/lib/utils";
 import { listMyPrompts } from "@/services/api/my-prompts";
 import { ALL_PROMPTS_OPTION, fetchPrompts, promptCategoryLabel, type Prompt } from "@/services/api/prompts";
+
+import { CreateSidePanel } from "./create-side-panel";
 
 type PromptCollection = {
     items: Prompt[];
@@ -42,7 +45,6 @@ export function CreativeAssetsPanel({
     onUsePrompt: (prompt: string) => void;
     onClose: () => void;
 }) {
-    const screens = Grid.useBreakpoint();
     const [activeTab, setActiveTab] = useState<AssetPanelTab>("assets");
     const [myPrompts, setMyPrompts] = useState(emptyPromptCollection);
     const [libraryPrompts, setLibraryPrompts] = useState(emptyPromptCollection);
@@ -87,85 +89,85 @@ export function CreativeAssetsPanel({
         if (!collection.loaded && !collection.loading) void loadPromptPage(activeTab, 1, category, keyword);
     }, [activeTab, libraryPromptCategory, libraryPromptKeyword, libraryPrompts, loadPromptPage, myPromptCategory, myPromptKeyword, myPrompts, open]);
 
-    const panel = (
-        <div className="flex h-full min-h-0 flex-col bg-white dark:bg-[#15181c]">
-            <div className="hidden h-14 shrink-0 items-center gap-2 border-b border-[#eceef1] px-4 lg:flex dark:border-[#2b3036]">
-                <LibraryBig className="size-4 text-[var(--ink-2)]" />
-                <h2 className="min-w-0 flex-1 text-sm font-semibold text-[#20242a] dark:text-[#f3f5f7]">资产</h2>
-                <Tooltip title="关闭资产面板">
-                    <Button type="text" shape="circle" icon={<X className="size-4" />} onClick={onClose} aria-label="关闭资产面板" />
-                </Tooltip>
-            </div>
-            <div className="min-h-0 flex-1 overflow-hidden">
-                <Tabs
-                    activeKey={activeTab}
-                    onChange={(key) => setActiveTab(key as AssetPanelTab)}
-                    tabBarGutter={0}
-                    className="creative-assets-tabs !flex !h-full !min-h-0 !flex-col px-3 [&_.ant-tabs-body-holder]:!min-h-0 [&_.ant-tabs-body-holder]:!flex-1 [&_.ant-tabs-body-holder]:!overflow-hidden [&_.ant-tabs-body]:!h-full [&_.ant-tabs-body]:!min-h-0 [&_.ant-tabs-content]:!h-full [&_.ant-tabs-content]:!min-h-0 [&_.ant-tabs-ink-bar]:!bg-[var(--ink-1)] [&_.ant-tabs-nav-list]:w-full [&_.ant-tabs-nav]:!shrink-0 [&_.ant-tabs-tab]:!mx-0 [&_.ant-tabs-tab]:!flex-1 [&_.ant-tabs-tab]:!justify-center [&_.ant-tabs-tab]:!px-1 [&_.ant-tabs-tab-btn]:!text-[#747d88] [&_.ant-tabs-tab-active_.ant-tabs-tab-btn]:!text-[var(--ink-1)] [&_.ant-tabs-tab-btn]:dark:!text-[#959eaa] [&_.ant-tabs-tabpane]:!h-full [&_.ant-tabs-tabpane]:!min-h-0 [&_.ant-tabs-tabpane]:!overflow-hidden"
-                    items={[
-                        {
-                            key: "assets",
-                            label: <TabLabel text="当前对话" count={mediaAssets.length} />,
-                            children: <ConversationAssets conversationId={conversationId} assets={mediaAssets} selectedAssetIds={selectedAssetIds} onToggle={onToggleAsset} onPreview={setPreview} />,
-                        },
-                        {
-                            key: "my",
-                            label: <TabLabel text="我的提示词" count={myPrompts.loaded ? myPrompts.total : undefined} />,
-                            children: (
-                                <PromptList
-                                    collection={myPrompts}
-                                    activeCategory={myPromptCategory}
-                                    keyword={myPromptKeyword}
-                                    onSearch={(keyword) => {
-                                        setMyPromptKeyword(keyword);
-                                        setMyPrompts(resetPromptCollection);
-                                    }}
-                                    onCategoryChange={(category) => {
-                                        setMyPromptCategory(category);
-                                        setMyPrompts(resetPromptCollection);
-                                    }}
-                                    onPreview={setPreview}
-                                    onUse={onUsePrompt}
-                                    onRetry={() => void loadPromptPage("my", 1, myPromptCategory, myPromptKeyword)}
-                                    onLoadMore={() => void loadPromptPage("my", myPrompts.page + 1, myPromptCategory, myPromptKeyword)}
-                                />
-                            ),
-                        },
-                        {
-                            key: "library",
-                            label: <TabLabel text="提示词库" count={libraryPrompts.loaded ? libraryPrompts.total : undefined} />,
-                            children: (
-                                <PromptList
-                                    collection={libraryPrompts}
-                                    activeCategory={libraryPromptCategory}
-                                    keyword={libraryPromptKeyword}
-                                    onSearch={(keyword) => {
-                                        setLibraryPromptKeyword(keyword);
-                                        setLibraryPrompts(resetPromptCollection);
-                                    }}
-                                    onCategoryChange={(category) => {
-                                        setLibraryPromptCategory(category);
-                                        setLibraryPrompts(resetPromptCollection);
-                                    }}
-                                    onPreview={setPreview}
-                                    onUse={onUsePrompt}
-                                    onRetry={() => void loadPromptPage("library", 1, libraryPromptCategory, libraryPromptKeyword)}
-                                    onLoadMore={() => void loadPromptPage("library", libraryPrompts.page + 1, libraryPromptCategory, libraryPromptKeyword)}
-                                />
-                            ),
-                        },
-                    ]}
-                />
-            </div>
-        </div>
-    );
+    const tabs: { key: AssetPanelTab; label: string; count?: number }[] = [
+        { key: "assets", label: "当前对话", count: mediaAssets.length },
+        { key: "my", label: "我的提示词", count: myPrompts.loaded ? myPrompts.total : undefined },
+        { key: "library", label: "提示词库", count: libraryPrompts.loaded ? libraryPrompts.total : undefined },
+    ];
 
     return (
         <>
-            {open && screens.lg ? <aside className="h-full min-h-0 w-[352px] shrink-0 border-l border-[#eceef1] dark:border-[#2b3036]">{panel}</aside> : null}
-            <Drawer title="资产" placement="right" size={360} open={open && screens.lg !== true} onClose={onClose} styles={{ wrapper: { maxWidth: "100vw" }, body: { height: "100%", padding: 0, overflow: "hidden" } }}>
-                {screens.lg !== true ? panel : null}
-            </Drawer>
+            <CreateSidePanel open={open} title="资产" icon={<LibraryBig className="size-4" />} onClose={onClose}>
+                <div className="flex h-full min-h-0 flex-col">
+                    {/* 分段切换：三个等宽胶囊，选中是白底浮起，比原来的下划线 tab 更安静 */}
+                    <div className="shrink-0 px-3 pb-2.5 pt-3">
+                        <div className="flex gap-1 rounded-lg bg-[var(--surface-inset)] p-1" role="tablist" aria-label="资产面板">
+                            {tabs.map((tab) => {
+                                const active = activeTab === tab.key;
+                                return (
+                                    <button
+                                        key={tab.key}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={active}
+                                        onClick={() => setActiveTab(tab.key)}
+                                        className={cn(
+                                            "flex h-8 flex-1 items-center justify-center gap-1 rounded-md text-[12.5px] font-medium transition-colors",
+                                            active
+                                                ? "bg-white text-[var(--ink-1)] shadow-[0_1px_3px_rgba(32,36,42,0.08)] dark:bg-[#2f343b] dark:text-white"
+                                                : "text-[var(--ink-3)] hover:text-[var(--ink-1)] dark:hover:text-white",
+                                        )}
+                                    >
+                                        {tab.label}
+                                        {tab.count ? <span className="text-[10px] font-normal opacity-55">{tab.count}</span> : null}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    <div className="min-h-0 flex-1 overflow-hidden">
+                        {activeTab === "assets" ? (
+                            <ConversationAssets conversationId={conversationId} assets={mediaAssets} selectedAssetIds={selectedAssetIds} onToggle={onToggleAsset} onPreview={setPreview} />
+                        ) : activeTab === "my" ? (
+                            <PromptList
+                                collection={myPrompts}
+                                activeCategory={myPromptCategory}
+                                keyword={myPromptKeyword}
+                                onSearch={(keyword) => {
+                                    setMyPromptKeyword(keyword);
+                                    setMyPrompts(resetPromptCollection);
+                                }}
+                                onCategoryChange={(category) => {
+                                    setMyPromptCategory(category);
+                                    setMyPrompts(resetPromptCollection);
+                                }}
+                                onPreview={setPreview}
+                                onUse={onUsePrompt}
+                                onRetry={() => void loadPromptPage("my", 1, myPromptCategory, myPromptKeyword)}
+                                onLoadMore={() => void loadPromptPage("my", myPrompts.page + 1, myPromptCategory, myPromptKeyword)}
+                            />
+                        ) : (
+                            <PromptList
+                                collection={libraryPrompts}
+                                activeCategory={libraryPromptCategory}
+                                keyword={libraryPromptKeyword}
+                                onSearch={(keyword) => {
+                                    setLibraryPromptKeyword(keyword);
+                                    setLibraryPrompts(resetPromptCollection);
+                                }}
+                                onCategoryChange={(category) => {
+                                    setLibraryPromptCategory(category);
+                                    setLibraryPrompts(resetPromptCollection);
+                                }}
+                                onPreview={setPreview}
+                                onUse={onUsePrompt}
+                                onRetry={() => void loadPromptPage("library", 1, libraryPromptCategory, libraryPromptKeyword)}
+                                onLoadMore={() => void loadPromptPage("library", libraryPrompts.page + 1, libraryPromptCategory, libraryPromptKeyword)}
+                            />
+                        )}
+                    </div>
+                </div>
+            </CreateSidePanel>
             <AssetPreviewModal preview={preview} onClose={() => setPreview(undefined)} />
         </>
     );
@@ -185,7 +187,19 @@ export function ConversationAssets({
     onPreview: (preview: PanelPreview) => void;
 }) {
     const [activeType, setActiveType] = useState<"image" | "video">("image");
-    if (!conversationId || !assets.length) return <PanelEmpty icon={<ImageIcon className="size-5" />} text="当前对话还没有资产" />;
+    if (!conversationId || !assets.length) {
+        return (
+            <div className="flex h-full flex-col items-center justify-center gap-3 px-6 pb-10 text-center">
+                <span className="grid size-12 place-items-center rounded-2xl bg-[var(--surface-inset)] text-[var(--ink-3)]">
+                    <ImageIcon className="size-5" />
+                </span>
+                <div>
+                    <p className="text-[13px] font-medium text-[var(--ink-2)]">当前对话还没有资产</p>
+                    <p className="mt-1 text-[11.5px] leading-5 text-[var(--ink-3)]">生成的图片和视频会出现在这里，点「引用」可以直接带进下一轮</p>
+                </div>
+            </div>
+        );
+    }
     const imageAssets = assets.filter((asset) => asset.type === "image");
     const videoAssets = assets.filter((asset) => asset.type === "video");
     const visibleType = activeType === "image" && imageAssets.length ? "image" : activeType === "video" && videoAssets.length ? "video" : imageAssets.length ? "image" : "video";
@@ -193,19 +207,20 @@ export function ConversationAssets({
     const selected = new Set(selectedAssetIds);
     return (
         <div className="flex h-full min-h-0 flex-col" data-testid="creative-conversation-assets">
-            <div className="mx-3 mb-2 grid grid-cols-2 gap-1 rounded-lg border border-[#e4e7eb] bg-[#f5f6f8] p-1 dark:border-[#343a42] dark:bg-[#20242a]" role="tablist" aria-label="当前对话资产类型">
+            <div className="flex shrink-0 items-center gap-1.5 px-3 pb-2.5" role="tablist" aria-label="当前对话资产类型">
                 <ConversationAssetTypeTab label="图片" count={imageAssets.length} active={visibleType === "image"} disabled={!imageAssets.length} onClick={() => setActiveType("image")} />
                 <ConversationAssetTypeTab label="视频" count={videoAssets.length} active={visibleType === "video"} disabled={!videoAssets.length} onClick={() => setActiveType("video")} />
             </div>
-            <div className="hide-scrollbar grid min-h-0 flex-1 auto-rows-max grid-cols-4 gap-2 overflow-y-auto px-3 pb-4" data-testid={`creative-conversation-${visibleType}-assets`}>
+            <div className="hide-scrollbar grid min-h-0 flex-1 auto-rows-max grid-cols-3 gap-2 overflow-y-auto px-3 pb-4" data-testid={`creative-conversation-${visibleType}-assets`}>
                 {visibleAssets.map((asset) => {
                     const active = selected.has(asset.id);
                     return (
                         <article key={asset.id} className="group min-w-0" title={asset.title}>
                             <div
-                                className={`relative aspect-square overflow-hidden rounded-md border-2 transition ${
-                                    active ? "border-[var(--ink-1)] bg-[var(--surface-soft)] dark:border-[#8b8b95] dark:bg-[var(--surface-inset)]" : "border-transparent bg-[#f1f3f5] group-hover:border-[#d3d6dc] dark:bg-[#24282e] dark:group-hover:border-[#4a4d55]"
-                                }`}
+                                className={cn(
+                                    "relative aspect-square overflow-hidden rounded-lg bg-[var(--surface-inset)] ring-1 transition",
+                                    active ? "ring-2 ring-[var(--ink-1)] dark:ring-[#8b8b95]" : "ring-black/5 group-hover:ring-black/15 dark:ring-white/10 dark:group-hover:ring-white/25",
+                                )}
                             >
                                 <button
                                     type="button"
@@ -221,23 +236,28 @@ export function ConversationAssets({
                                     <AssetPreview asset={asset} />
                                 </button>
                                 {asset.type === "video" ? (
-                                    <span className="pointer-events-none absolute bottom-1.5 left-1.5 grid size-6 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+                                    <span className="pointer-events-none absolute bottom-1.5 left-1.5 grid size-6 place-items-center rounded-full bg-black/55 text-white">
                                         <Play className="ml-0.5 size-3 fill-current" />
+                                    </span>
+                                ) : null}
+                                {active ? (
+                                    <span className="pointer-events-none absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-[var(--ink-1)] text-white dark:bg-white dark:text-[#1b1e22]">
+                                        <AtSign className="size-3" />
                                     </span>
                                 ) : null}
                             </div>
                             <button
                                 type="button"
                                 data-testid="creative-asset-reference-action"
-                                className={`mt-1 flex h-5 w-full items-center justify-center gap-1 rounded-sm !bg-transparent !text-[11px] font-medium transition-colors hover:!bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-1)] ${
-                                    active ? "!text-[var(--ink-1)]" : "!text-[var(--ink-3)] hover:!text-[var(--ink-1)]"
-                                }`}
+                                className={cn(
+                                    "mt-1 flex h-6 w-full items-center justify-center gap-1 rounded-md text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-1)]",
+                                    active ? "text-[var(--ink-1)] hover:bg-[var(--surface-soft)]" : "text-[var(--ink-3)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-1)]",
+                                )}
                                 onClick={() => onToggle(asset.id)}
                                 aria-pressed={active}
                                 aria-label={`${active ? "取消引用" : "引用"}${asset.title}`}
                                 title={active ? "取消引用" : "引用"}
                             >
-                                <AtSign className="size-3" aria-hidden="true" />
                                 {active ? "已引用" : "引用"}
                             </button>
                         </article>
@@ -255,15 +275,16 @@ function ConversationAssetTypeTab({ label, count, active, disabled, onClick }: {
             role="tab"
             aria-selected={active}
             disabled={disabled}
-            className={`flex h-8 items-center justify-center gap-1 rounded-md text-xs font-medium transition ${
+            className={cn(
+                "inline-flex h-7 items-center gap-1 rounded-full px-3 text-[11.5px] font-medium transition-colors",
                 active
-                    ? "bg-white text-[var(--ink-1)] shadow-[0_1px_3px_rgba(32,36,42,0.08)] dark:bg-[#30343b] dark:text-[var(--ink-1)]"
-                    : "text-[#68727e] hover:bg-white/70 hover:text-[#303844] disabled:cursor-default disabled:opacity-35 dark:text-[#aab3bd] dark:hover:bg-[#2a2f36] dark:hover:text-white"
-            }`}
+                    ? "bg-[var(--ink-1)] text-white dark:bg-white dark:text-[#1b1e22]"
+                    : "bg-[var(--surface-inset)] text-[var(--ink-3)] hover:text-[var(--ink-1)] disabled:cursor-default disabled:opacity-40",
+            )}
             onClick={onClick}
         >
             {label}
-            <span className="text-[10px] font-normal opacity-60">{count}</span>
+            <span className="text-[10px] font-normal opacity-65">{count}</span>
         </button>
     );
 }

@@ -53,12 +53,14 @@ describe("create page ambient background", () => {
         // 底部只剩一层均匀竖向渐变
         expect(css).toContain("linear-gradient(180deg, #191c21 0%, #141619 48%, #0d0e10 100%)");
 
-        // 点阵只在上半屏可见、向下淡出；波纹半径收小，不再压出一块大圆斑
+        // 点阵是品牌橙、铺到首屏底边（灵感发现上方）才淡出
         expect(css).toContain(".create-dot-field {");
         expect(css).toContain("mask-image: linear-gradient(180deg");
+        expect(css).toContain("transparent 100%");
         expect(dotField).toContain("create-dot-field pointer-events-none");
+        expect(dotField).toContain("[--create-dot-rgb:226_103_31]");
         expect(dotField).toContain("const RADIUS = 150;");
-        expect(dotField).toContain("const BASE_ALPHA = 0.032;");
+        expect(dotField).toContain("const BASE_ALPHA = 0.09;");
 
         // 卡面暖光同样收窄到左上角一小团，深色态不再整张卡发棕
         const surfaces = await readFile(resolve(process.cwd(), "src/app/styles/global-surfaces.css"), "utf8");

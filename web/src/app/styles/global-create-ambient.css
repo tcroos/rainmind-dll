@@ -64,9 +64,11 @@
  * 波纹半径一大更是变成压在卡片上的一块大圆斑 —— 即梦的点阵也只集中在 hero 区。
  * 用渐变淡出而不是裁切，才不会出现直角边。
  */
+/* 点阵铺满整个首屏：只在最末 12% 淡出，落点就在「灵感发现」标题上方，
+ * 再往上都保持完整纹理，卡片区靠本身的底色盖住，不需要提前把点抹掉。 */
 .create-dot-field {
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 22%, rgba(0, 0, 0, 0.5) 46%, transparent 74%);
-    mask-image: linear-gradient(180deg, #000 0%, #000 22%, rgba(0, 0, 0, 0.5) 46%, transparent 74%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, rgba(0, 0, 0, 0.5) 88%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 62%, rgba(0, 0, 0, 0.5) 88%, transparent 100%);
 }
 
 @keyframes create-ambient-breathe {

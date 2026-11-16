@@ -18,11 +18,11 @@ const WAVE_NUMBER = 0.045;
 const WAVE_SPEED = 5.6;
 /** 最大径向位移（px）：靠挤密/拉疏读出波浪，而不是靠忽明忽暗 */
 const MAX_PUSH = 9;
-/** 静止底纹的透明度（0~1）：压到 3.2%，只负责「有纹理」。
- * 调淡是因为点阵现在有上半屏蒙版，静止底纹再重就会和蒙版边缘叠出一道亮带。 */
-const BASE_ALPHA = 0.032;
+/** 静止底纹的透明度（0~1）：换成品牌橙之后同透明度会比黑色更"退后"，
+ * 所以比原来的 3.2% 稍微抬一点，才能读成一层暖色纹理而不是脏点。 */
+const BASE_ALPHA = 0.09;
 /** 波峰处额外增加的亮度：压得比位移轻，波浪主要靠疏密读出来，不靠忽明忽暗 */
-const WAVE_ALPHA = 0.1;
+const WAVE_ALPHA = 0.18;
 
 /**
  * 跟随光标的点阵涟漪。
@@ -227,7 +227,7 @@ export function CreateDotField() {
             ref={canvasRef}
             aria-hidden
             data-testid="create-dot-field"
-            className="create-dot-field pointer-events-none absolute inset-0 h-full w-full [--create-dot-rgb:19_19_22] dark:[--create-dot-rgb:255_255_255]"
+            className="create-dot-field pointer-events-none absolute inset-0 h-full w-full [--create-dot-rgb:226_103_31] dark:[--create-dot-rgb:232_180_74]"
         />
     );
 }

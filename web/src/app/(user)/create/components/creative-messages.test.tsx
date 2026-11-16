@@ -695,8 +695,10 @@ describe("CreativeMessages", () => {
 
         expect(markup).not.toContain('data-testid="creative-assistant-avatar"');
         expect(markup).not.toContain('data-testid="creative-user-avatar"');
-        expect(markup).toContain("rounded-[14px]");
-        expect(markup).toContain("bg-[linear-gradient(135deg,#f4f5f6_0%,#eceef1_100%)]");
+        // 用户消息是白底圆角气泡，不再是灰渐变
+        expect(markup).toContain("rounded-[18px]");
+        expect(markup).toContain("bg-white");
+        expect(markup).not.toContain("bg-[linear-gradient(135deg,#f4f5f6_0%,#eceef1_100%)]");
         expect(markup).toContain("1970");
         expect(markup).toContain('aria-label="复制输入内容"');
         expect(markup).toContain('aria-label="复制消息"');
