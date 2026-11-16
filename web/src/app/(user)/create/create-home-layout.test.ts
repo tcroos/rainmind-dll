@@ -48,7 +48,9 @@ describe("create Agent home layout", () => {
         expect(pageTools).not.toContain("bg-");
         expect(page).not.toContain("w-[320px]");
         expect(conversationList).toContain('className="flex h-9 w-full');
-        expect(conversationList).toContain("group flex min-h-13");
+        expect(conversationList).toContain("group relative flex min-h-10");
+        expect(conversationList).toContain("function groupConversations(");
+        expect(conversationList).toContain("最近对话 · {items.length}");
         expect(page).not.toContain("最近创作");
         expect(page).toContain("<CreateInspirationGallery");
 
