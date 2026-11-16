@@ -15,6 +15,12 @@ describe("site settings", () => {
         expect(settings.iconUrl).toBe("https://cdn.example.com/favicon.ico");
     });
 
+    it("keeps a configured contact image link and drops unsafe schemes", () => {
+        expect(normalizeSiteSettings({ contactImageUrl: "https://cdn.example.com/contact.png" }).contactImageUrl).toBe("https://cdn.example.com/contact.png");
+        expect(normalizeSiteSettings({ contactImageUrl: "/contact.png" }).contactImageUrl).toBe("/contact.png");
+        expect(normalizeSiteSettings({ contactImageUrl: "javascript:alert(1)" }).contactImageUrl).toBe("");
+    });
+
     it("defaults public contacts to the VOZEB email and QQ group", () => {
         const settings = normalizeSiteSettings({});
 

@@ -456,6 +456,7 @@ export function normalizeSiteSettings(settings: Partial<SiteSettings> | undefine
         title,
         logoUrl: normalizeLogoUrl(settings?.logoUrl),
         iconUrl: normalizeSiteIconUrl(settings?.iconUrl),
+        contactImageUrl: normalizeLinkUrl(settings?.contactImageUrl, ""),
         seoTitle,
         seoDescription: normalizeText(settings?.seoDescription, DEFAULT_SITE_SETTINGS.seoDescription, 180),
         seoKeywords: normalizeBrandDefault(settings?.seoKeywords, DEFAULT_SITE_SETTINGS.seoKeywords, title, DEFAULT_SITE_SETTINGS.seoKeywords.replace(DEFAULT_SITE_SETTINGS.title, title), 240),

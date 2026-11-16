@@ -28,30 +28,37 @@ describe("marketing page login flow", () => {
         expect(actions).toContain("openProtectedPath(`/billing/checkout?product=${encodeURIComponent(product.id)}`)");
     });
 
-    it("keeps one solid CTA and two account entries without the brand mark", async () => {
+    it("restores the brand mark and keeps one solid CTA in the header", async () => {
         const header = await read("src/app/home/home-header.tsx");
 
-        // 品牌区只剩字标，不再渲染 ∞ 图标
-        expect(header).not.toContain("<SiteLogo");
-        expect(header).not.toContain("site.logoUrl");
+        // 左上角恢复品牌图标，与字标一起出现
+        expect(header).toContain("<SiteLogo");
+        expect(header).toContain("site.logoUrl");
         // 未登录：文字「登录」回首页 + 实心「开始创作」带 next=/create
         expect(header).toContain('openLogin("/")');
         expect(header).toMatch(/>\s*登录\s*<\/button>/);
         expect(header).toContain("开始创作");
-        // 已登录：同一位置只留「进入工作台」，不出现两个同义入口
+        // 已登录：同一位置只留「进入工作台」
         expect(header).toContain("进入工作台");
+        expect(header).toContain("openContact");
         expect(header).toContain('openProtectedPath("/create")');
         expect(header).not.toContain("立即体验");
     });
 
-    it("uses official-style navigation items that all have a real destination", async () => {
+    it("moves the navigation to the right and links API plus contact", async () => {
         const data = await read("src/app/home/home-data.ts");
 
-        expect(data).toContain('{ label: "AI 创作", href: "/create", action: "protected" }');
-        expect(data).toContain('{ label: "短剧制作", href: "/drama", action: "protected" }');
         expect(data).toContain('{ label: "作品广场", href: "/gallery", action: "link" }');
+        expect(data).toContain('{ label: "API", href: "https://api.rainmind.net/", action: "external" }');
         expect(data).toContain('{ label: "价格", href: "/billing", action: "billing" }');
+        expect(data).toContain('{ label: "联系我们", href: "#contact", action: "contact" }');
         expect(data).toContain('{ label: "关于", href: "/about", action: "link" }');
+        expect(data).not.toContain('label: "AI 创作"');
+        expect(data).not.toContain('label: "短剧制作"');
+
+        const header = await read("src/app/home/home-header.tsx");
+        expect(header).toContain("styles.headerRight");
+        expect(header).toContain('target="_blank"');
 
         // 「关于」是公开页，访客点进来不能被 (user) 布局踢回登录页
         const about = await read("src/app/about/page.tsx");

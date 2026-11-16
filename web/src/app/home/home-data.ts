@@ -6,6 +6,7 @@ import type { PublicGalleryItem } from "@/services/api/work-governance";
 export type HomeSiteSettings = {
     title: string;
     logoUrl: string;
+    contactImageUrl: string;
     seoDescription: string;
     footerCopyright: string;
     termsUrl: string;
@@ -17,17 +18,16 @@ export type HomeSiteSettings = {
 export type HomeNavigationItem = {
     label: string;
     href: string;
-    action: "link" | "protected" | "billing";
+    action: "link" | "protected" | "billing" | "external" | "contact";
 };
 
-/* 官网栏目按「能做什么 → 看作品 → 多少钱 → 我们是谁」排，
- * 不再把「创作 Agent / 短剧制作」这类功能名和「作品广场 / 价格」并排放，
- * 层级更像正式官网；每一项都有真实落点，不放死链。 */
+/* 官网导航只留「看作品 → 接 API → 多少钱 → 找我们 → 我们是谁」，
+ * 具体创作入口交给首屏和右侧 CTA，不在导航里堆功能名。 */
 export const HOME_NAVIGATION = [
-    { label: "AI 创作", href: "/create", action: "protected" },
-    { label: "短剧制作", href: "/drama", action: "protected" },
     { label: "作品广场", href: "/gallery", action: "link" },
+    { label: "API", href: "https://api.rainmind.net/", action: "external" },
     { label: "价格", href: "/billing", action: "billing" },
+    { label: "联系我们", href: "#contact", action: "contact" },
     { label: "关于", href: "/about", action: "link" },
 ] as const satisfies readonly HomeNavigationItem[];
 

@@ -299,6 +299,8 @@ export type SiteSettings = {
     title: string;
     logoUrl: string;
     iconUrl: string;
+    /* 首页「联系我们」弹窗里的图片，由后台填写链接；留空时弹窗显示待配置提示。 */
+    contactImageUrl: string;
     seoTitle: string;
     seoDescription: string;
     seoKeywords: string;

@@ -8,6 +8,7 @@ import { createAgentPromptHref, type CreateAgentMode } from "@/lib/create-agent-
 import { usePublicSessionStore } from "@/stores/use-public-session-store";
 import { useUserStore } from "@/stores/use-user-store";
 import type { HomeSiteSettings } from "./home-data";
+import { HomeContactModal } from "./home-contact-modal";
 import { resolveSiteTitle } from "@/lib/site-brand";
 
 type HomeActions = {
@@ -16,6 +17,7 @@ type HomeActions = {
     site: HomeSiteSettings;
     openLogin: (nextPath?: string) => void;
     openBillingPlans: () => void;
+    openContact: () => void;
     openProtectedPath: (path: string) => void;
     startCreating: (prompt?: string, mode?: CreateAgentMode) => void;
 };
@@ -25,6 +27,7 @@ const HomeActionsContext = createContext<HomeActions | null>(null);
 export function HomeActionsProvider({ initialSite, children }: { initialSite: HomeSiteSettings; children: ReactNode }) {
     const router = useRouter();
     const [billingPlansOpen, setBillingPlansOpen] = useState(false);
+    const [contactOpen, setContactOpen] = useState(false);
     const user = useUserStore((state) => state.user);
     const session = usePublicSessionStore((state) => state.payload);
     const sessionReady = usePublicSessionStore((state) => state.ready);
@@ -35,6 +38,7 @@ export function HomeActionsProvider({ initialSite, children }: { initialSite: Ho
             ...(sessionSite || {}),
             title: resolveSiteTitle(sessionSite?.title || initialSite.title),
             logoUrl: sessionSite?.logoUrl?.trim() || initialSite.logoUrl || "/logo.svg",
+            contactImageUrl: sessionSite?.contactImageUrl?.trim() || initialSite.contactImageUrl || "",
             friendLinks: sessionSite?.friendLinks || initialSite.friendLinks,
             socials: (sessionSite?.socials as HomeSiteSettings["socials"] | undefined) || initialSite.socials,
         }),
@@ -55,8 +59,9 @@ export function HomeActionsProvider({ initialSite, children }: { initialSite: Ho
     const startCreating = (prompt = "", mode: CreateAgentMode = "agent") => openProtectedPath(createAgentPromptHref(prompt, { source: "home", mode }));
 
     return (
-        <HomeActionsContext.Provider value={{ authenticated, sessionReady, site, openLogin, openBillingPlans: () => setBillingPlansOpen(true), openProtectedPath, startCreating }}>
+        <HomeActionsContext.Provider value={{ authenticated, sessionReady, site, openLogin, openBillingPlans: () => setBillingPlansOpen(true), openContact: () => setContactOpen(true), openProtectedPath, startCreating }}>
             {children}
+            <HomeContactModal open={contactOpen} imageUrl={site.contactImageUrl} siteTitle={site.title} onClose={() => setContactOpen(false)} />
             <BillingPlansModal open={billingPlansOpen} onClose={() => setBillingPlansOpen(false)} onSelect={(product) => openProtectedPath(`/billing/checkout?product=${encodeURIComponent(product.id)}`)} />
         </HomeActionsContext.Provider>
     );

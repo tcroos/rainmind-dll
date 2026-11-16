@@ -10,6 +10,7 @@ export type PublicSiteSettings = {
     title: string;
     logoUrl: string;
     iconUrl?: string;
+    contactImageUrl?: string;
     seoDescription?: string;
     footerCopyright?: string;
     termsUrl?: string;

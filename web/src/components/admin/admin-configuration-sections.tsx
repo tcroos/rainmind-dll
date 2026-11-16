@@ -50,9 +50,17 @@ export function AdminSiteSection({ controller }: { controller: AdminDashboardCon
                                     </Button>
                                 </div>
                             </LabeledControl>
+                            <LabeledControl label="联系图片 URL">
+                                <Input
+                                    value={settings.site.contactImageUrl}
+                                    maxLength={2000}
+                                    placeholder="https://... 或 /contact.png（建议 3:4 竖图）"
+                                    onChange={(event) => updateSiteSetting("contactImageUrl", event.target.value)}
+                                />
+                            </LabeledControl>
                         </div>
                         <div className="rounded-md border border-dashed border-stone-300 bg-white p-3 text-xs leading-5 text-stone-500 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-400">
-                            Logo 用于站点品牌展示，浏览器图标用于 favicon、Apple 图标和 PWA；两者支持站内路径、远程 URL、data:image 或本地上传，最大 300KB。
+                            Logo 用于站点品牌展示，浏览器图标用于 favicon、Apple 图标和 PWA；两者支持站内路径、远程 URL、data:image 或本地上传，最大 300KB。联系图片用于首页「联系我们」弹窗，按 3:4 竖版展示，填写图片链接即可。
                         </div>
 
                         <div className="border-t border-stone-200 pt-5 dark:border-stone-800">
