@@ -359,12 +359,33 @@
     }
 
     .auth-page-card .ant-input-affix-wrapper {
+        align-items: center;
+        height: 46px;
         min-height: 46px;
-        padding-inline: 12px;
+        padding: 0 12px;
     }
 
-    .auth-page-card .ant-input:not(textarea) {
+    /* 输入文字 14px 和 12px 标签成比例；高度交给 wrapper，
+     * input 只占一行 22px 并垂直居中——之前给 input 直接设 46px，
+     * 叠上 antd 的内边距把框子撑到 56px，文字还偏上。 */
+    .auth-page-card input.ant-input {
+        font-size: 14px !important;
         height: 46px;
+        line-height: 22px;
+        padding: 0 12px;
+    }
+
+    .auth-page-card .ant-input-affix-wrapper .ant-input {
+        height: 22px;
+        padding: 0;
+    }
+
+    .auth-page-card .ant-input::placeholder {
+        color: rgba(17, 17, 17, 0.3);
+    }
+
+    .dark .auth-page-card .ant-input::placeholder {
+        color: rgba(255, 255, 255, 0.28);
     }
 
     .dark .auth-page-card .ant-input-affix-wrapper,

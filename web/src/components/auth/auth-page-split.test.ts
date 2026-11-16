@@ -140,6 +140,18 @@ describe("login page split layout", () => {
         expect(authForm).toContain("disabled={disabled || !installTokenReady}");
     });
 
+    it("keeps auth inputs at 46px with centred 14px text", async () => {
+        const css = await read("src/app/styles/global-auth.css");
+
+        // wrapper 负责 46px，input 只占 22px 行高；字号必须带 !important，
+        // 否则 antd 无层级的 .ant-input-lg { font-size: 16px } 会压回来。
+        expect(css).toContain(".auth-page-card .ant-input-affix-wrapper {");
+        expect(css).toContain("height: 46px;");
+        expect(css).toContain("font-size: 14px !important;");
+        expect(css).toContain(".auth-page-card .ant-input-affix-wrapper .ant-input {");
+        expect(css).toContain("height: 22px;");
+    });
+
     it("exposes a replaceable video link", async () => {
         const config = await read("src/lib/auth-showcase.ts");
         expect(config).toContain("NEXT_PUBLIC_AUTH_SHOWCASE_VIDEO_URL");
