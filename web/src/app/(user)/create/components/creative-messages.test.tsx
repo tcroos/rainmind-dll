@@ -388,7 +388,8 @@ describe("CreativeMessages", () => {
 
         expect(markup).toContain('data-testid="creative-media-round"');
         expect(markup).toContain('data-testid="creative-round-request"');
-        expect(markup).toContain('data-testid="creative-user-avatar"');
+        // 消息两侧不再有头像图标，只留文字与产物
+        expect(markup).not.toContain('data-testid="creative-user-avatar"');
         expect(markup).toContain('data-testid="creative-result-group"');
         expect(markup).toContain('data-testid="creative-video-result"');
         expect(markup).toContain('data-testid="creative-video-player"');
@@ -397,7 +398,7 @@ describe("CreativeMessages", () => {
         expect(markup).toContain('data-rendered-height="293"');
         expect(markup).toContain("space-y-5 sm:space-y-6");
         expect(markup).toContain("max-w-[640px]");
-        expect(markup).toContain('aria-label="创作助手"');
+        expect(markup).not.toContain('aria-label="创作助手"');
         expect(markup).toContain("text-right");
         expect(markup).toContain("让参考图自然动起来");
         expect(markup).toContain('aria-label="复制输入内容"');
@@ -657,8 +658,7 @@ describe("CreativeMessages", () => {
         );
 
         expect(markup).toContain('data-testid="creative-generation-failure"');
-        expect((markup.match(/aria-label="创作助手"/g) || []).length).toBe(1);
-        expect((markup.match(/data-testid="creative-assistant-avatar"/g) || []).length).toBe(1);
+        expect(markup).not.toContain('data-testid="creative-assistant-avatar"');
         expect(markup).toContain('aria-label="直接重试本次创作"');
         expect(markup).toContain("直接重试");
         const failureMarkup = markup.slice(markup.indexOf('data-testid="creative-generation-failure"'));
@@ -666,7 +666,7 @@ describe("CreativeMessages", () => {
         expect(failureMarkup).not.toContain("Sparkles");
     });
 
-    it("uses the same compact identity spacing for ordinary text messages", () => {
+    it("renders ordinary text messages without the avatar bubbles", () => {
         const markup = renderMessages(
             {
                 id: "text-user",
@@ -693,9 +693,8 @@ describe("CreativeMessages", () => {
             },
         );
 
-        expect(markup).toContain('data-testid="creative-assistant-avatar"');
-        expect(markup).toContain("size-11");
-        expect(markup).toContain("!size-8");
+        expect(markup).not.toContain('data-testid="creative-assistant-avatar"');
+        expect(markup).not.toContain('data-testid="creative-user-avatar"');
         expect(markup).toContain("rounded-[14px]");
         expect(markup).toContain("bg-[linear-gradient(135deg,#f4f5f6_0%,#eceef1_100%)]");
         expect(markup).toContain("1970");

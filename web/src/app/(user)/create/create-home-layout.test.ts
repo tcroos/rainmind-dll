@@ -34,20 +34,29 @@ describe("create Agent home layout", () => {
         expect(page).toContain("resizeObserver.observe(content)");
         expect(messages).toContain('data-testid="creative-message-list"');
         expect(messages).toContain("[assets.length, followLatest, lastMessageId, loading]");
-        expect(page).toContain("historyOpen && screens.lg");
-        expect(page).toContain("historyOpen && screens.lg !== true");
+        // 历史记录改成右侧浮层（位置/宽度对齐消息中心），点面板外也会关闭
+        expect(page).toContain('role="dialog"');
+        expect(page).toContain('aria-label="创作历史"');
+        expect(page).toContain("fixed inset-0 z-40");
+        expect(page).toContain("var(--announcement-drawer-width, 340px)");
         expect(page).toContain("aria-expanded={historyOpen}");
         const pageTools = page.match(/className="([^"]+)" data-testid="creative-page-tools"/)?.[1] || "";
         expect(pageTools).toContain("absolute");
         expect(pageTools).toContain("top-3");
         expect(pageTools).not.toContain("h-14");
         expect(pageTools).not.toContain("bg-");
-        expect(page).toContain("w-[min(280px,24vw)]");
         expect(page).not.toContain("w-[320px]");
         expect(conversationList).toContain('className="flex h-9 w-full');
         expect(conversationList).toContain("group flex min-h-13");
         expect(page).not.toContain("最近创作");
         expect(page).toContain("<CreateInspirationGallery");
+
+        // 「+」是新建对话：留在对话视图、清空消息，用空状态引导，不退回主页
+        expect(page).toContain('router.replace("/create?new=1")');
+        expect(page).toContain('searchParams.get("new") === "1"');
+        expect(page).toContain("<CreativeEmptyChat");
+        // 侧栏点 Agent（/create 无参数）回主页：清掉当前会话，首屏内容回来
+        expect(page).toContain("if (searchKey || !previous) return;");
         expect(page.indexOf("<CreateWorkbenchOverview")).toBeLessThan(page.indexOf("<CreateInspirationGallery"));
         expect(page).not.toContain("composerHeight");
         expect(page).not.toContain("top-[117px]");

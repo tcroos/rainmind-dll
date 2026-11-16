@@ -10,18 +10,14 @@ import { AgentMarkdown } from "@/components/agent/agent-markdown";
 import { AgentMessageActions } from "@/components/agent/agent-message-actions";
 import { formatAgentArtifactText, formatAgentMessageText, friendlyAgentError } from "@/components/agent/agent-message-format";
 import { AgentMediaPreview } from "@/components/agent/agent-media-preview";
-import { SiteLogo } from "@/components/layout/site-logo";
 import { useCopyText } from "@/hooks/use-copy-text";
 import { useCreativeAgentModels } from "@/hooks/use-creative-agent-options";
 import { isCreativeProjectHandoff, type CreativeAsset, type CreativeMessage, type CreativeProjectHandoff } from "@/lib/creative-runtime-contract";
 import { imageReferenceLabel } from "@/lib/image-reference-prompt";
 import { imagePreviewUrl } from "@/lib/media-image-url";
 import { cn } from "@/lib/utils";
-import { userAvatarFallback } from "@/lib/user-avatar";
-import { DEFAULT_SITE_TITLE } from "@/lib/site-brand";
 import type { MaterializedCreativeProject } from "@/services/creative-project-handoff";
 import { getCreativeAgentRun, type CreativeAgentRun } from "@/services/api/creative";
-import { usePublicSessionStore } from "@/stores/use-public-session-store";
 
 import { creativeAssetLayout } from "./creative-asset-layout";
 import { creativeConversationEntries, isMediaCreativeRound, type CreativeConversationEntry } from "./creative-conversation-rounds";
@@ -65,11 +61,7 @@ export function CreativeMessages({
     followLatest?: boolean;
 }) {
     const endRef = useRef<HTMLDivElement>(null);
-    const site = usePublicSessionStore((state) => state.payload?.settings?.site) || { title: DEFAULT_SITE_TITLE, logoUrl: "/logo.svg" };
-    const user = usePublicSessionStore((state) => state.payload?.user || null);
     const models = useCreativeAgentModels();
-    const avatarUrl = user?.avatarUrl?.trim();
-    const avatarFallback = userAvatarFallback(user?.displayName || user?.username || "用户");
     const assetsByMessage = useMemo(() => {
         const map = new Map<string, CreativeAsset[]>();
         for (const asset of assets) {
@@ -111,7 +103,7 @@ export function CreativeMessages({
     if (loading) return <div className="grid flex-1 place-items-center text-sm text-stone-400">正在读取会话...</div>;
 
     return (
-        <div className="mx-auto w-full max-w-[1120px] space-y-3 px-3 pb-3 pt-5 sm:space-y-8 sm:px-8 sm:pt-7" data-testid="creative-message-list">
+        <div className="mx-auto w-full max-w-[1040px] space-y-3 px-4 pb-4 pt-6 sm:space-y-8 sm:px-10 sm:pt-8" data-testid="creative-message-list">
             {hasOlder ? (
                 <div className="flex justify-center">
                     <Button type="text" loading={olderLoading} onClick={onLoadOlder}>
@@ -157,9 +149,8 @@ export function CreativeMessages({
                 const failedTasks = run?.tasks.filter((task) => task.status === "failed") || [];
                 const failedRound = failedRoundsByAssistantId.get(item.id);
                 return (
-                    <article key={item.id} className={cn("group/message flex min-w-0 items-start gap-4 sm:gap-5", item.role === "user" ? "justify-end" : "justify-start")}>
-                        {item.role === "assistant" ? <CreativeAssistantAvatar className="mt-0" logoUrl={site.logoUrl} /> : null}
-                        <div className={cn("min-w-0", item.role === "user" ? "max-w-[520px] text-right" : "min-w-0 flex-1")}>
+                    <article key={item.id} className={cn("group/message flex min-w-0", item.role === "user" ? "justify-end" : "justify-start")}>
+                        <div className={cn("min-w-0", item.role === "user" ? "max-w-[560px] text-right" : "min-w-0 flex-1")}>
                             {item.role === "user" && itemAssets.length ? <CreativeRoundReferenceStrip assets={itemAssets} /> : null}
                             {item.role === "assistant" && item.status === "running" ? (
                                 <CreativeGenerationWaiting run={run} message={item} />
@@ -190,7 +181,6 @@ export function CreativeMessages({
                             {item.role === "assistant" && failedRound ? <RetryAction onRetry={() => onRetryMessage(failedRound.assistant, failedRound.run)} detail={failedTasks.length ? `${failedTasks.length} 项生成失败` : undefined} /> : null}
                             {item.role !== "user" && item.status !== "running" ? <AgentMessageActions text={textAssetContent || (downloads.length ? "" : displayContent)} downloads={downloads.length ? [] : downloads} /> : null}
                         </div>
-                        {item.role === "user" ? <CreativeUserAvatar className="mt-2 !size-8" avatarUrl={avatarUrl} fallback={avatarFallback} label={user?.displayName || user?.username || "用户"} /> : null}
                     </article>
                 );
             })}
@@ -228,7 +218,6 @@ function CreativeMediaRound({
     selectedAssetIds: string[];
     onToggleAsset: (id: string) => void;
 }) {
-    const siteLogoUrl = usePublicSessionStore((state) => state.payload?.settings?.site?.logoUrl || "/logo.svg");
     const displayContent = assistantMessage.status === "failed" ? friendlyAgentError(assistantMessage.content) : formatAgentMessageText(assistantMessage.content);
     const handoff = isCreativeProjectHandoff(assistantMessage.metadata.projectHandoff) ? assistantMessage.metadata.projectHandoff : null;
     const failedTasks = run?.tasks.filter((task) => task.status === "failed") || [];
@@ -247,7 +236,7 @@ function CreativeMediaRound({
     return (
         <section data-testid="creative-media-round" className="pb-8 sm:pb-11">
             <div className="w-full min-w-0 space-y-5 sm:space-y-6">
-                <div data-testid="creative-round-request" className="ml-auto min-w-0 max-w-[640px] text-right lg:-mr-8">
+                <div data-testid="creative-round-request" className="ml-auto min-w-0 max-w-[640px] text-right">
                     <div className="flex items-start justify-end gap-3">
                         <div className="min-w-0 max-w-[520px]">
                             {referencedAssets.length ? <CreativeRoundReferenceStrip assets={referencedAssets} /> : null}
@@ -256,12 +245,10 @@ function CreativeMediaRound({
                             </p>
                             <CreativeUserMessageMeta message={userMessage} />
                         </div>
-                        <CreativeUserAvatar className="mt-2 !size-8" />
                     </div>
                 </div>
 
-                <div className="flex min-w-0 items-start gap-4 sm:gap-5">
-                    <CreativeAssistantAvatar logoUrl={siteLogoUrl} />
+                <div className="flex min-w-0 items-start">
                     <div className="min-w-0 flex-1">
                         {!isFailedMediaRound && assistantMessage.status !== "running" ? (
                             <>
@@ -352,24 +339,6 @@ function CreativeRoundReferenceStrip({ assets }: { assets: CreativeAsset[] }) {
     );
 }
 
-function CreativeUserAvatar({ avatarUrl, fallback, label, className }: { avatarUrl?: string; fallback?: string; label?: string; className?: string }) {
-    const user = usePublicSessionStore((state) => state.payload?.user || null);
-    const resolvedAvatarUrl = avatarUrl ?? user?.avatarUrl?.trim();
-    const resolvedFallback = fallback ?? userAvatarFallback(user?.displayName || user?.username || "用户");
-    const resolvedLabel = label ?? user?.displayName ?? user?.username ?? "用户";
-    return (
-        <span data-testid="creative-user-avatar" className={cn("grid size-7 shrink-0 place-items-center overflow-hidden rounded-full", className)} role="img" aria-label={resolvedLabel}>
-            {resolvedAvatarUrl ? (
-                <img src={resolvedAvatarUrl} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
-            ) : (
-                <span aria-hidden="true" className="grid size-full place-items-center rounded-full bg-[#66758e] text-[10px] font-semibold leading-none text-white ring-1 ring-black/5 dark:bg-[#d8dee8] dark:text-[#252b33] dark:ring-white/10">
-                    {resolvedFallback}
-                </span>
-            )}
-        </span>
-    );
-}
-
 function CreativeUserMessageMeta({ message }: { message: CreativeMessage }) {
     const copyText = useCopyText();
     return (
@@ -388,18 +357,6 @@ function CreativeUserMessageMeta({ message }: { message: CreativeMessage }) {
                 </button>
             </Tooltip>
         </div>
-    );
-}
-
-function CreativeAssistantAvatar({ logoUrl, className }: { logoUrl?: string; className?: string }) {
-    return (
-        <span
-            data-testid="creative-assistant-avatar"
-            className={cn("grid size-11 shrink-0 place-items-center rounded-full border border-[#b9b5ff] bg-white text-[#615cff] shadow-[0_4px_14px_rgba(97,92,255,0.08)] dark:border-[#514b81] dark:bg-[#1d2025]", className)}
-            aria-label="创作助手"
-        >
-            <SiteLogo logoUrl={logoUrl || "/logo.svg"} className="size-6" />
-        </span>
     );
 }
 

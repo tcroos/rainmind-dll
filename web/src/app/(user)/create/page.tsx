@@ -1,10 +1,10 @@
 "use client";
 
-import { App, Button, Drawer, Grid } from "antd";
+import { App, Button } from "antd";
 import type { TextAreaRef } from "antd/es/input/TextArea";
 import { ChevronsDown, Clapperboard, FolderOpen, History, Play, Plus, ScanFace, ShoppingBag, Sparkles, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { CREATIVE_UPLOAD_ACCEPT, CREATIVE_UPLOAD_MAX_BYTES, isCreativeUploadMimeType } from "@/lib/creative-upload";
 import type { CreativeAsset, CreativeGenerationMode, CreativeGenerationPreferences, CreativeMessage } from "@/lib/creative-runtime-contract";
@@ -26,6 +26,7 @@ import { CreativeAssetsPanel } from "./components/creative-assets-panel";
 import { applyAgentGenerationCapability, shouldShowVideoFrameControls } from "./components/creative-composer-video-mode";
 import { CreativeConversationList } from "./components/creative-conversation-list";
 import { CreateInspirationGallery } from "./components/create-inspiration-gallery";
+import { CreativeEmptyChat } from "./components/creative-empty-chat";
 import { CreativeMessages } from "./components/creative-messages";
 import { CreateWorkbenchOverview } from "./components/create-workbench-overview";
 import { publicCreativeAssetPrompt, remapCreativeAssetReferences } from "./components/creative-asset-mention";
@@ -46,7 +47,6 @@ const SKILL_VISUALS = [
 export default function CreatePage() {
     const { message } = App.useApp();
     const router = useRouter();
-    const screens = Grid.useBreakpoint();
     const inputRef = useRef<TextAreaRef>(null);
     const attachmentInputRef = useRef<HTMLInputElement>(null);
     const frameInputRef = useRef<HTMLInputElement>(null);
@@ -73,6 +73,12 @@ export default function CreatePage() {
     const [smartPlanning, setSmartPlanning] = useState(true);
     const [creationMode, setCreationMode] = useState<"agent" | CreativeGenerationMode>("agent");
     const [generationPreferences, setGenerationPreferences] = useState<CreativeGenerationPreferences>({});
+    const searchParams = useSearchParams();
+    /* ?new=1 表示「刚点过新建对话」：清空消息但留在对话视图，
+     * 用空状态引导填内容；不带任何参数才是主页。
+     * 这样侧栏点 Agent（/create 无参数）就能回到主页。 */
+    const searchKey = searchParams.toString();
+    const newChatMode = searchParams.get("new") === "1";
     const [historyOpen, setHistoryOpen] = useState(false);
     const [assetsOpen, setAssetsOpen] = useState(false);
     const [awayFromLatest, setAwayFromLatest] = useState(false);
@@ -92,7 +98,7 @@ export default function CreatePage() {
     const openAgentConversation = agent.openConversation;
     const newAgentConversation = agent.newConversation;
     const hasConversation = agent.messages.length > 0;
-    const showConversation = hasConversation || agent.conversationLoading;
+    const showConversation = hasConversation || agent.conversationLoading || newChatMode;
     showConversationRef.current = showConversation;
     homeDockedRef.current = homeDocked;
     const selectedSkill = skills.find((skill) => skill.id === selectedSkillId);
@@ -151,6 +157,18 @@ export default function CreatePage() {
         if (!agent.conversationId || createConversationIdFromSearch(window.location.search) === agent.conversationId) return;
         router.replace(createConversationHref(agent.conversationId), { scroll: false });
     }, [agent.conversationId, router]);
+
+    /* 从「某条会话 / 新对话」回到不带参数的 /create，就是回主页：
+     * 侧栏点 Agent 走的就是这条路，此时把当前消息清掉，首屏的灵感与项目才会回来。 */
+    const previousSearchKeyRef = useRef(searchKey);
+    useEffect(() => {
+        const previous = previousSearchKeyRef.current;
+        previousSearchKeyRef.current = searchKey;
+        if (searchKey || !previous) return;
+        newAgentConversation();
+        setHistoryOpen(false);
+        setAssetsOpen(false);
+    }, [newAgentConversation, searchKey]);
 
     useEffect(() => {
         previousScrollTopRef.current = 0;
@@ -236,9 +254,13 @@ export default function CreatePage() {
         });
     };
 
+    /* 「新建对话」= 清空当前消息、留在对话视图并显示引导，不退回主页 */
     const newConversation = () => {
         newAgentConversation();
-        router.replace("/create");
+        setHistoryOpen(false);
+        setAssetsOpen(false);
+        updatePrompt("");
+        router.replace("/create?new=1");
     };
 
     const submit = async () => {
@@ -610,49 +632,52 @@ export default function CreatePage() {
         />
     );
 
+    /* 历史记录改成右侧浮层：位置、宽度、圆角、投影全部对齐「消息中心」那套抽屉，
+     * 不再从左侧挤出一列把对话推走。点 × 或点面板外的任意位置都会关闭。 */
     const historyPanel = (
-        <div className="flex h-full min-h-0 flex-col">
-            <div className="hidden h-14 shrink-0 items-center gap-2 px-4 lg:flex">
-                <History className="size-4 text-[var(--ink-2)]" />
-                <h2 className="min-w-0 flex-1 text-sm font-semibold text-[#20242a] dark:text-[#f3f5f7]">创作历史</h2>
-                <Button type="text" shape="circle" icon={<X className="size-4" />} onClick={() => setHistoryOpen(false)} aria-label="关闭创作历史" title="关闭创作历史" />
-            </div>
-            <div className="min-h-0 flex-1">
-                <CreativeConversationList
-                    items={agent.conversations}
-                    activeId={agent.conversationId}
-                    loading={agent.historyLoading}
-                    hasMore={agent.historyHasMore}
-                    loadingMore={agent.historyLoadingMore}
-                    onLoadMore={() => void agent.loadMoreConversations()}
-                    onNew={() => {
-                        newConversation();
-                        if (screens.lg !== true) setHistoryOpen(false);
-                    }}
-                    onOpen={(id) => {
-                        openConversation(id);
-                        if (screens.lg !== true) setHistoryOpen(false);
-                    }}
-                    onRename={async (id, title) => {
-                        try {
-                            await agent.renameConversation(id, title);
-                            message.success("标题已更新");
-                        } catch (error) {
-                            message.error(error instanceof Error ? error.message : "修改标题失败");
-                            throw error;
-                        }
-                    }}
-                    onDelete={async (ids) => {
-                        try {
-                            await agent.deleteConversations(ids);
-                            message.success(ids.length > 1 ? `已删除 ${ids.length} 条对话` : "对话已删除");
-                        } catch (error) {
-                            message.error(error instanceof Error ? error.message : "删除对话失败");
-                            throw error;
-                        }
-                    }}
-                />
-            </div>
+        <div className="flex h-14 shrink-0 items-center gap-2 px-4">
+            <History className="size-4 text-[var(--ink-2)]" />
+            <h2 className="min-w-0 flex-1 text-sm font-semibold text-[#20242a] dark:text-[#f3f5f7]">创作历史</h2>
+            <Button type="text" shape="circle" icon={<X className="size-4" />} onClick={() => setHistoryOpen(false)} aria-label="关闭创作历史" title="关闭创作历史" />
+        </div>
+    );
+
+    const historyList = (
+        <div className="min-h-0 flex-1">
+            <CreativeConversationList
+                items={agent.conversations}
+                activeId={agent.conversationId}
+                loading={agent.historyLoading}
+                hasMore={agent.historyHasMore}
+                loadingMore={agent.historyLoadingMore}
+                onLoadMore={() => void agent.loadMoreConversations()}
+                onNew={() => {
+                    newConversation();
+                    setHistoryOpen(false);
+                }}
+                onOpen={(id) => {
+                    openConversation(id);
+                    setHistoryOpen(false);
+                }}
+                onRename={async (id, title) => {
+                    try {
+                        await agent.renameConversation(id, title);
+                        message.success("标题已更新");
+                    } catch (error) {
+                        message.error(error instanceof Error ? error.message : "修改标题失败");
+                        throw error;
+                    }
+                }}
+                onDelete={async (ids) => {
+                    try {
+                        await agent.deleteConversations(ids);
+                        message.success(ids.length > 1 ? `已删除 ${ids.length} 条对话` : "对话已删除");
+                    } catch (error) {
+                        message.error(error instanceof Error ? error.message : "删除对话失败");
+                        throw error;
+                    }
+                }}
+            />
         </div>
     );
 
@@ -660,8 +685,8 @@ export default function CreatePage() {
         <main className="relative flex h-full min-h-0 flex-col overflow-hidden text-[var(--ink-1)]">
             <CreateDotField />
             <div className="relative flex min-h-0 flex-1">
-                {historyOpen && screens.lg ? <aside className="h-full min-h-0 w-[min(280px,24vw)] shrink-0 bg-[var(--surface-rail)]">{historyPanel}</aside> : null}
-                <div className="relative flex min-w-0 flex-1 flex-col">
+                {/* 右侧浮层展开时给对话让出宽度，消息不会被面板压住 */}
+                <div className={cn("relative flex min-w-0 flex-1 flex-col transition-[padding] duration-200", historyOpen && "lg:pr-[calc(var(--announcement-drawer-width,340px)+28px)]")}>
                     <div className="pointer-events-none absolute right-3 top-3 z-30 flex items-center gap-0.5 sm:right-5" data-testid="creative-page-tools">
                         {hasConversation ? (
                             <Button
@@ -741,7 +766,15 @@ export default function CreatePage() {
                             else if (["ArrowDown", "PageDown", "End"].includes(event.key) || event.key === " ") scrollingAwayFromLatestRef.current = false;
                         }}
                     >
-                        {showConversation ? (
+                        {showConversation && !hasConversation && !agent.conversationLoading ? (
+                            <CreativeEmptyChat
+                                siteTitle={siteTitle}
+                                onPick={(value) => {
+                                    updatePrompt(value);
+                                    window.requestAnimationFrame(() => inputRef.current?.focus());
+                                }}
+                            />
+                        ) : showConversation ? (
                             <CreativeMessages
                                 messages={agent.messages}
                                 assets={agent.assets}
@@ -892,9 +925,26 @@ export default function CreatePage() {
                 }}
             />
 
-            <Drawer title="创作历史" placement="right" size="min(92vw, 380px)" open={historyOpen && screens.lg !== true} onClose={() => setHistoryOpen(false)} styles={{ body: { padding: 0, overflow: "hidden" } }}>
-                {screens.lg !== true ? historyPanel : null}
-            </Drawer>
+            {historyOpen ? (
+                <>
+                    {/* 透明遮罩：点面板外的任意位置都会关闭，但不压暗对话内容 */}
+                    <div className="fixed inset-0 z-40" onClick={() => setHistoryOpen(false)} aria-hidden="true" />
+                    <section
+                        role="dialog"
+                        aria-label="创作历史"
+                        className="fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--surface-panel)] shadow-[0_24px_56px_-20px_rgba(17,20,28,0.28),0_2px_10px_-4px_rgba(17,20,28,0.12)] dark:shadow-[0_24px_56px_-18px_rgba(0,0,0,0.72)]"
+                        style={{
+                            top: "var(--announcement-drawer-top, 116px)",
+                            right: "var(--announcement-drawer-right, 16px)",
+                            bottom: "var(--announcement-drawer-bottom, 32px)",
+                            width: "min(calc(100vw - 24px), var(--announcement-drawer-width, 340px))",
+                        }}
+                    >
+                        {historyPanel}
+                        {historyList}
+                    </section>
+                </>
+            ) : null}
         </main>
     );
 }
