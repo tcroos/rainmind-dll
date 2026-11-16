@@ -73,13 +73,17 @@ describe("login page split layout", () => {
     });
 
     it("gives the forgot-password page the same full-screen split", async () => {
-        const page = await read("src/app/forgot-password/page.tsx");
+        const [page, css] = await Promise.all([read("src/app/forgot-password/page.tsx"), read("src/app/styles/global-auth.css")]);
 
         // 找回密码曾经自己套 .auth-page-card 但没有视频列，网格直接把内容劈成两半
         expect(page).toContain("AuthShowcaseVideo");
         expect(page).toContain('className="auth-page-card-content"');
         expect(page).toContain('className="auth-page-card-inner"');
         expect(page.indexOf("<AuthShowcaseVideo />")).toBeLessThan(page.indexOf('className="auth-page-card-content"'));
+        // 重置密码页也走新版表单：无居中 Logo、验证码是行内文字按钮、自动填充覆盖同样生效
+        expect(page).not.toContain("auth-page-logo-link");
+        expect(page).toContain("auth-code-button");
+        expect(css).toContain(".auth-page-card input:-webkit-autofill");
     });
 
     it("keeps auth links readable in dark mode despite antd's unlayered anchor rule", async () => {
