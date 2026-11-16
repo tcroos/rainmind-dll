@@ -37,11 +37,6 @@ export function HomeAgentHero() {
                     </div>
                 </div>
             </div>
-
-            <div className={styles.heroCue} aria-hidden="true">
-                <span>SCROLL</span>
-                <span className={styles.heroCueLine} />
-            </div>
         </section>
     );
 }

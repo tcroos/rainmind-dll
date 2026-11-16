@@ -45,6 +45,19 @@ describe("marketing page login flow", () => {
         expect(header).not.toContain("立即体验");
     });
 
+    it("hides the scroll cue and narrows the header without darkening its border", async () => {
+        const hero = await read("src/app/home/home-agent-hero.tsx");
+        expect(hero).not.toContain("SCROLL");
+        expect(hero).not.toContain("heroCue");
+
+        const css = await read("src/app/home/home.module.css");
+        const scrolledStart = css.indexOf(".headerScrolled .headerInner");
+        const scrolledBlock = css.slice(scrolledStart, css.indexOf(":global(.dark) .headerScrolled .headerInner"));
+        // 滚动后胶囊收窄，但不再覆盖边框颜色（之前 ×140% 会被读成一条黑边）
+        expect(scrolledBlock).toContain("max-width: 880px");
+        expect(scrolledBlock).not.toContain("border-color");
+    });
+
     it("keeps the navigation short and links API plus contact", async () => {
         const data = await read("src/app/home/home-data.ts");
 
