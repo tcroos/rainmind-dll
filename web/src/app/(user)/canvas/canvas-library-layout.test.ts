@@ -15,6 +15,11 @@ describe("canvas library layout", () => {
         const grid = page.slice(page.indexOf("<div className={cn(\"grid grid-cols-1"));
         expect(page).toContain("CanvasCreateCard");
         expect(grid.indexOf("<CanvasCreateCard")).toBeLessThan(grid.indexOf("projects.map("));
+
+        // 新建卡和项目卡同构：16:10 封面 + 标题行；整格撑满会把封面拉成方块
+        const createCard = await read("src/app/(user)/canvas/components/canvas-project-create-card.tsx");
+        expect(createCard).toContain("aspect-[16/10]");
+        expect(createCard).not.toContain("min-h-[220px]");
         expect(page).toContain("xl:grid-cols-4");
     });
 
