@@ -5,7 +5,6 @@ import { Button, Input, Pagination, Select, Spin, Tag } from "antd";
 import { CircleHelp, CreditCard, History, ReceiptText, RefreshCw, Save, ShieldCheck, TicketPercent, UserCircle, UserPlus, Wallet, WalletCards } from "lucide-react";
 
 import { CreditSymbol, formatCreditAmount } from "@/constant/credits";
-import { BillingPlanGrid } from "@/components/billing/billing-plan-grid";
 import { CompactEmptyState } from "@/components/compact-empty-state";
 import { cn } from "@/lib/utils";
 import { type BillingOrder, type BillingOrderStatus, type BillingProduct } from "@/services/api/billing";
@@ -64,69 +63,30 @@ export function ProfileSectionNav({ activeKey, onChange, mode, scope }: { active
     }
 
     return (
-        <aside className="min-w-0 self-start xl:sticky xl:top-0">
-            <div className="rounded-xl border border-border bg-card p-1 text-card-foreground shadow-sm shadow-stone-200/60 dark:shadow-black/20">
-                <div className="flex flex-col gap-1">
-                    {sections.map((section) => {
-                        const active = section.key === activeKey;
-                        return (
-                            <button
-                                key={section.key}
-                                type="button"
-                                className={cn(
-                                    "relative flex min-w-0 items-center gap-2 overflow-hidden rounded-lg border px-2 py-2 text-left transition",
-                                    active
-                                        ? "border-[#bcc8d6] bg-[#eef2f7] text-[#263141] shadow-[0_10px_24px_rgba(71,85,105,0.10)] dark:border-[#536173] dark:bg-[#252d37] dark:text-white dark:shadow-black/20"
-                                        : "border-transparent text-stone-600 hover:border-stone-200 hover:bg-stone-100 hover:text-stone-950 dark:text-stone-300 dark:hover:border-stone-800 dark:hover:bg-stone-900 dark:hover:text-white",
-                                )}
-                                onClick={() => onChange(section.key)}
-                            >
-                                <span
-                                    className={cn(
-                                        "flex size-6 shrink-0 items-center justify-center rounded-md",
-                                        active ? "bg-white text-[#52627a] shadow-sm dark:bg-[#343e49] dark:text-[#d8dee8]" : "bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-200",
-                                    )}
-                                >
-                                    {section.icon}
-                                </span>
-                                <span className="min-w-0">
-                                    <span className={cn("block text-sm font-semibold", active ? "text-[#263141] dark:text-white" : "text-stone-950 dark:text-stone-100")}>{section.label}</span>
-                                    <span className={cn("mt-0.5 block truncate text-xs", active ? "text-[#66758e] dark:text-[#b8c4d6]" : "text-stone-500 dark:text-stone-400")}>{section.shortDescription}</span>
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
+        <aside className="min-w-0 self-start xl:sticky xl:top-0" aria-label={navLabel}>
+            <div className="flex flex-col gap-0.5">
+                {sections.map((section) => {
+                    const active = section.key === activeKey;
+                    return (
+                        <button
+                            key={section.key}
+                            type="button"
+                            className={cn(
+                                "group relative flex min-w-0 items-center gap-2.5 rounded-lg py-2 pl-3 pr-2 text-left transition-colors",
+                                active ? "bg-[var(--surface-inset)] text-[var(--ink-1)]" : "text-[var(--ink-2)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-1)]",
+                            )}
+                            onClick={() => onChange(section.key)}
+                        >
+                            {/* 选中态改用品牌橙细条：和创作历史、公告那套指示语言一致 */}
+                            <span aria-hidden className={cn("absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full transition-opacity", active ? "bg-[var(--brand-500)] opacity-100" : "opacity-0")} />
+                            <span className={cn("shrink-0 transition-colors", active ? "text-[var(--ink-1)]" : "text-[var(--ink-3)] group-hover:text-[var(--ink-2)]")}>{section.icon}</span>
+                            <span className="min-w-0 flex-1 truncate text-[13px] font-medium leading-5">{section.label}</span>
+                            {active ? <span className="size-1 shrink-0 rounded-full bg-[var(--brand-500)]" /> : null}
+                        </button>
+                    );
+                })}
             </div>
         </aside>
-    );
-}
-
-export function BillingCenterSection({ products, productsLoading, onRefresh, onCheckout }: { products: BillingProduct[]; productsLoading: boolean; onRefresh: () => void; onCheckout: (product: BillingProduct) => void }) {
-    return (
-        <section className="rounded-lg border border-border bg-card p-2 text-card-foreground sm:rounded-2xl sm:p-6">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <h2 className="text-lg font-semibold tracking-tight text-stone-950 sm:text-xl dark:text-white">套餐中心</h2>
-                    <p className="mt-1 text-xs leading-5 text-stone-500 sm:text-sm sm:leading-6 dark:text-stone-400">选择适合当前创作频率的方案，结算时进入独立安全支付页。</p>
-                </div>
-                <Button className={`${profileSecondaryButtonClass} shrink-0`} icon={<RefreshCw className="size-4" />} onClick={onRefresh} loading={productsLoading}>
-                    <span className="hidden sm:inline">刷新</span>
-                </Button>
-            </div>
-            <div className="mt-2 border-t border-stone-200 pt-2 sm:mt-4 sm:pt-4 dark:border-stone-800">
-                <div className="flex items-end justify-between gap-3">
-                    <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-stone-950 dark:text-white">可选套餐</h3>
-                        <p className="mt-1 hidden text-sm text-stone-500 sm:block dark:text-stone-400">价格、积分与有效期均同步后台已上架商品。</p>
-                    </div>
-                    {!productsLoading && products.length ? <span className="shrink-0 text-xs text-stone-400 dark:text-stone-500">共 {products.length} 个方案</span> : null}
-                </div>
-                <div className="mt-2 sm:mt-4">
-                    {productsLoading ? <LoadingBlock /> : products.length ? <BillingPlanGrid products={products} onSelect={onCheckout} /> : <CompactEmptyState title="暂无已上架套餐商品" description="管理员上架商品后会显示在这里。" />}
-                </div>
-            </div>
-        </section>
     );
 }
 

@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { App, Button, Input, Pagination } from "antd";
 import { saveAs } from "file-saver";
-import { ArrowRight, ArrowUpRight, BookOpenText, CreditCard, Download, History, ReceiptText, RefreshCw, ShieldCheck, TicketPercent, Wallet, WalletCards } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpenText, CreditCard, Download, History, ReceiptText, RefreshCw, ShieldCheck, Sparkles, TicketPercent, Wallet, WalletCards } from "lucide-react";
+import { BillingPlanGrid } from "@/components/billing/billing-plan-grid";
 
 import { CreditSymbol, formatCreditAmount } from "@/constant/credits";
 import { CompactEmptyState } from "@/components/compact-empty-state";
 import { resetClientSessionState } from "@/lib/client-session-reset";
 import { downloadUserDataExport } from "@/services/api/user-data-export";
+import type { BillingProduct } from "@/services/api/billing";
+import { cn } from "@/lib/utils";
 import { useUserStore, type LocalUser } from "@/stores/use-user-store";
 
 import { accountSectionHref, parseScopedSection, type AccountScope } from "./account-sections";
@@ -26,7 +29,6 @@ import {
     profileSecondaryButtonClass,
     profileDangerButtonClass,
     ProfileSectionNav,
-    BillingCenterSection,
     AccountEmailForm,
     ProfileForm,
     OrderList,
@@ -74,6 +76,7 @@ export function AccountCenter({ scope }: { scope: AccountScope }) {
     const [sendingCode, setSendingCode] = useState(false);
     const [savingPassword, setSavingPassword] = useState(false);
     const [exportingData, setExportingData] = useState(false);
+    const [billTab, setBillTab] = useState<"orders" | "points">("orders");
     const plansAnchorRef = useRef<HTMLDivElement | null>(null);
     const pendingPlanScroll = useRef(false);
     const { products, coupons, orders, points, consumption, loading: accountLoading, refresh: refreshAccount } = useProfileData(activeSection);
@@ -218,22 +221,17 @@ export function AccountCenter({ scope }: { scope: AccountScope }) {
     return (
         <main className="profile-page-scroll h-full min-h-0 overflow-x-hidden overflow-y-auto px-2 py-2 text-foreground sm:px-6 sm:py-6" style={{ backgroundColor: "var(--background)" }} data-testid={`account-center-${scope}`}>
             <div className="mx-auto w-full max-w-[1280px] pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(2rem+env(safe-area-inset-bottom))]">
-                <div className="mb-1 flex items-center justify-end gap-1.5 sm:mb-5 sm:justify-between sm:gap-3 sm:rounded-xl sm:border sm:border-border sm:bg-card sm:p-6 sm:text-card-foreground">
-                    <div className="hidden min-w-0 sm:block">
-                        <h1 className="text-lg font-semibold text-stone-950 sm:text-2xl dark:text-white">{copy.title}</h1>
-                        <p className="mt-2 hidden max-w-2xl text-sm leading-6 text-stone-500 sm:block dark:text-stone-400">{copy.description}</p>
+                {/* 两页共用一条紧凑标题：页头已经写着页面名，这里不再套一张大卡片 */}
+                <div className="mb-2 flex items-start justify-between gap-3 sm:mb-5">
+                    <div className="min-w-0">
+                        <h1 className="text-[20px] font-semibold leading-7 tracking-tight text-[var(--ink-1)] sm:text-[22px]">{copy.title}</h1>
+                        <p className="mt-0.5 text-[12px] leading-5 text-[var(--ink-3)] sm:truncate sm:text-[12.5px]">{copy.description}</p>
                     </div>
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex shrink-0 items-center gap-2 pt-0.5">
                         <Button size="small" className={profileSecondaryButtonClass} icon={<RefreshCw className="size-3.5 sm:size-4" />} loading={accountLoading} onClick={() => void refreshAccount()}>
-                            <span className="sm:hidden">刷新</span>
-                            <span className="hidden sm:inline">刷新记录</span>
+                            <span className="hidden sm:inline">刷新</span>
                         </Button>
-                        {scope === "wallet" ? (
-                            <Button size="small" className={profilePrimaryButtonClass} type="primary" icon={<CreditCard className="size-3.5 sm:size-4" />} onClick={scrollToPlans}>
-                                <span className="sm:hidden">充值</span>
-                                <span className="hidden sm:inline">立即充值</span>
-                            </Button>
-                        ) : (
+                        {scope === "wallet" ? null : (
                             <Button size="small" className={profilePrimaryButtonClass} type="primary" icon={<Wallet className="size-3.5 sm:size-4" />} onClick={() => router.push("/wallet")}>
                                 <span className="sm:hidden">钱包</span>
                                 <span className="hidden sm:inline">前往钱包</span>
@@ -247,19 +245,32 @@ export function AccountCenter({ scope }: { scope: AccountScope }) {
                 </div>
 
                 {scope === "wallet" && activeSection === "wallet" ? (
-                    <section className="mb-2 overflow-hidden rounded-xl border border-border bg-card p-4 sm:mb-5 sm:rounded-2xl sm:p-6" data-testid="wallet-balance-card">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+                    /* 钱包首屏：一张「卡」讲清余额，下面一条四格入口，
+                     * 再往下直接就是套餐——把最重要的两个动作放在同一屏。 */
+                    <section data-testid="wallet-balance-card" className="relative mb-2 overflow-hidden rounded-2xl border border-[var(--hairline)] bg-card sm:mb-5">
+                        <div aria-hidden className="pointer-events-none absolute -right-24 -top-28 size-72 rounded-full" style={{ background: "radial-gradient(circle, rgba(226,103,31,0.16), transparent 68%)" }} />
+                        <div className="relative flex flex-col gap-4 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-6">
                             <div className="min-w-0">
-                                <div className="text-[12px] leading-5 text-stone-500 dark:text-stone-400">当前积分</div>
-                                <div className="mt-1 flex items-baseline gap-2">
-                                    <CreditSymbol className="size-4 self-center text-[var(--brand-600)]" />
-                                    <span className="text-[32px] font-semibold leading-none tabular-nums text-stone-950 sm:text-[38px] dark:text-white">{formatCreditAmount(user?.pointsBalance || 0)}</span>
-                                    <span className="text-[12px] text-stone-400">积分</span>
+                                <div className="flex items-center gap-1.5 text-[12px] leading-5 text-[var(--ink-3)]">
+                                    <CreditSymbol className="text-[var(--brand-600)]" />
+                                    可用积分
                                 </div>
-                                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11.5px] text-stone-600 dark:text-stone-300">
-                                    <span className="inline-flex h-6 items-center rounded-full bg-[var(--surface-inset)] px-2.5">今日可用 {formatCreditAmount(user?.dailyPointsBalance || 0)}</span>
-                                    <span className="inline-flex h-6 items-center rounded-full bg-[var(--surface-inset)] px-2.5">永久 {formatCreditAmount(permanentPoints)}</span>
-                                    <span className="inline-flex h-6 items-center rounded-full bg-[var(--brand-soft)] px-2.5 font-medium text-[var(--brand-600)]">{planLabel}</span>
+                                <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
+                                    <span className="text-[38px] font-semibold leading-none tabular-nums text-[var(--ink-1)] sm:text-[44px]">{formatCreditAmount(user?.pointsBalance || 0)}</span>
+                                    <span className="pb-1 text-[12px] text-[var(--ink-3)]">积分</span>
+                                    <span className="mb-1.5 inline-flex h-6 items-center gap-1 rounded-full bg-[var(--brand-soft)] px-2.5 text-[11px] font-medium text-[var(--brand-600)]">
+                                        <Sparkles className="size-3" />
+                                        {planLabel}
+                                    </span>
+                                </div>
+                                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-[var(--ink-3)]">
+                                    <span>
+                                        今日可用 <span className="font-semibold tabular-nums text-[var(--ink-1)]">{formatCreditAmount(user?.dailyPointsBalance || 0)}</span>
+                                    </span>
+                                    <span aria-hidden className="h-3 w-px bg-[var(--hairline)]" />
+                                    <span>
+                                        永久 <span className="font-semibold tabular-nums text-[var(--ink-1)]">{formatCreditAmount(permanentPoints)}</span>
+                                    </span>
                                 </div>
                             </div>
                             <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -272,7 +283,7 @@ export function AccountCenter({ scope }: { scope: AccountScope }) {
                             </div>
                         </div>
 
-                        <div className="mt-4 grid grid-cols-2 gap-1.5 border-t border-stone-200 pt-3 sm:grid-cols-4 sm:gap-2 dark:border-stone-800">
+                        <div className="relative grid grid-cols-2 gap-px bg-[var(--hairline)] sm:grid-cols-4">
                             {[
                                 { key: "orders" as ProfileSectionKey, label: "订单记录", value: `${orders.total} 笔`, icon: ReceiptText },
                                 { key: "points" as ProfileSectionKey, label: "积分流水", value: `${points.total} 条`, icon: CreditSymbol },
@@ -285,15 +296,16 @@ export function AccountCenter({ scope }: { scope: AccountScope }) {
                                         key={item.key}
                                         type="button"
                                         onClick={() => switchSection(item.key)}
-                                        className="group flex min-w-0 items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors hover:bg-[var(--surface-inset)]"
+                                        className="group flex min-w-0 items-center gap-2.5 bg-card px-4 py-3 text-left transition-colors hover:bg-[var(--surface-soft)]"
                                     >
-                                        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--surface-inset)] text-stone-500 transition-colors group-hover:text-[var(--ink-1)] dark:text-stone-400">
+                                        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--surface-inset)] text-[var(--ink-3)] transition-colors group-hover:text-[var(--ink-1)]">
                                             <Icon className="size-4" />
                                         </span>
-                                        <span className="min-w-0">
-                                            <span className="block truncate text-[12.5px] font-medium text-stone-900 dark:text-stone-100">{item.label}</span>
-                                            <span className="block truncate text-[11px] text-stone-500 dark:text-stone-400">{item.value}</span>
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate text-[13px] font-semibold leading-5 tabular-nums text-[var(--ink-1)]">{item.value}</span>
+                                            <span className="block truncate text-[11px] leading-4 text-[var(--ink-3)]">{item.label}</span>
                                         </span>
+                                        <ArrowRight className="size-3.5 shrink-0 text-transparent transition-colors group-hover:text-[var(--ink-3)]" />
                                     </button>
                                 );
                             })}
@@ -308,23 +320,66 @@ export function AccountCenter({ scope }: { scope: AccountScope }) {
                     <div className="min-w-0 space-y-1.5 sm:space-y-5">
                         {/* 钱包概览：余额卡下面直接铺套餐，一屏内能选完并进入结算 */}
                         {activeSection === "wallet" ? (
-                            <div className="space-y-1.5 sm:space-y-5">
-                                <div id="wallet-plans" ref={plansAnchorRef} className="scroll-mt-4">
-                                    <BillingCenterSection
-                                        products={products.items}
-                                        productsLoading={products.loading}
-                                        onRefresh={() => void products.refresh()}
-                                        onCheckout={(product) => router.push(`/billing/checkout?product=${encodeURIComponent(product.id)}`)}
-                                    />
-                                </div>
-                                <div className="grid gap-1.5 sm:gap-5 lg:grid-cols-2">
-                                    <AccountPanel title="最近订单" description="支付完成后权益会自动到账，处理中的订单会显示状态。">
-                                        <OrderList loading={orders.loading} orders={orders.items.slice(0, 5)} total={orders.total} page={orders.page} onPageChange={orders.setPage} compact />
-                                    </AccountPanel>
-                                    <AccountPanel title="最近积分流水" description="每日积分、充值与消费扣除都会记录在这里。">
-                                        {points.loading ? <LoadingBlock /> : points.items.length ? <RecordList records={points.items.slice(0, 4)} /> : <CompactEmptyState title="暂无积分记录" description="每日积分、充值和模型消费记录会显示在这里。" />}
-                                    </AccountPanel>
-                                </div>
+                            <div className="space-y-2 sm:space-y-5">
+                                <WalletRechargeSection
+                                    anchorRef={plansAnchorRef}
+                                    products={products.items}
+                                    loading={products.loading}
+                                    onRefresh={() => void products.refresh()}
+                                    onCheckout={(product) => router.push(`/billing/checkout?product=${encodeURIComponent(product.id)}`)}
+                                />
+
+                                {/* 订单与积分并成一张「账单」卡，靠分段切换，不再并排两块同权重面板 */}
+                                <section className="overflow-hidden rounded-2xl border border-[var(--hairline)] bg-card" data-testid="wallet-bills">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-5">
+                                        <div className="min-w-0">
+                                            <h2 className="text-[15px] font-semibold leading-6 text-[var(--ink-1)]">账单</h2>
+                                            <p className="mt-0.5 text-[12px] leading-5 text-[var(--ink-3)]">最近的充值订单与积分变动。</p>
+                                        </div>
+                                        <div className="flex items-center gap-0.5 rounded-lg bg-[var(--surface-inset)] p-0.5" role="tablist" aria-label="账单类型">
+                                            {[
+                                                { key: "orders" as const, label: "订单" },
+                                                { key: "points" as const, label: "积分" },
+                                            ].map((tab) => {
+                                                const active = billTab === tab.key;
+                                                return (
+                                                    <button
+                                                        key={tab.key}
+                                                        type="button"
+                                                        role="tab"
+                                                        aria-selected={active}
+                                                        onClick={() => setBillTab(tab.key)}
+                                                        className={cn(
+                                                            "h-7 rounded-md px-3 text-[12px] font-medium transition-colors",
+                                                            active ? "bg-card text-[var(--ink-1)] shadow-[0_1px_3px_rgba(32,36,42,0.08)] dark:bg-[#2f343b]" : "text-[var(--ink-3)] hover:text-[var(--ink-1)]",
+                                                        )}
+                                                    >
+                                                        {tab.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <div className="px-4 pb-3 pt-3 sm:px-6 sm:pb-4">
+                                        {billTab === "orders" ? (
+                                            <OrderList loading={orders.loading} orders={orders.items.slice(0, 5)} total={orders.total} page={orders.page} onPageChange={orders.setPage} compact />
+                                        ) : points.loading ? (
+                                            <LoadingBlock />
+                                        ) : points.items.length ? (
+                                            <RecordList records={points.items.slice(0, 5)} />
+                                        ) : (
+                                            <CompactEmptyState title="暂无积分记录" description="每日积分、充值和模型消费记录会显示在这里。" />
+                                        )}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => switchSection(billTab)}
+                                        className="flex w-full items-center justify-center gap-1 border-t border-[var(--hairline)] py-2.5 text-[12px] font-medium text-[var(--ink-2)] transition-colors hover:bg-[var(--surface-soft)] hover:text-[var(--ink-1)]"
+                                    >
+                                        查看全部{billTab === "orders" ? "订单" : "积分记录"}
+                                        <ArrowRight className="size-3.5" />
+                                    </button>
+                                </section>
                             </div>
                         ) : null}
 
@@ -403,9 +458,9 @@ export function AccountCenter({ scope }: { scope: AccountScope }) {
                         ) : null}
 
                         {activeSection === "billing" ? (
-                            <BillingCenterSection
+                            <WalletRechargeSection
                                 products={products.items}
-                                productsLoading={products.loading}
+                                loading={products.loading}
                                 onRefresh={() => void products.refresh()}
                                 onCheckout={(product) => router.push(`/billing/checkout?product=${encodeURIComponent(product.id)}`)}
                             />
@@ -558,5 +613,41 @@ export function AccountCenter({ scope }: { scope: AccountScope }) {
                 </div>
             </div>
         </main>
+    );
+}
+
+/**
+ * 充值区：去掉原来「套餐中心 → 可选套餐 → 共 N 个方案」三层标题，
+ * 只留一个标题和一行说明，网格直接铺开。
+ */
+function WalletRechargeSection({
+    products,
+    loading,
+    onRefresh,
+    onCheckout,
+    anchorRef,
+}: {
+    products: BillingProduct[];
+    loading: boolean;
+    onRefresh: () => void;
+    onCheckout: (product: BillingProduct) => void;
+    anchorRef?: RefObject<HTMLDivElement | null>;
+}) {
+    return (
+        <section id="wallet-plans" ref={anchorRef} className="scroll-mt-4 overflow-hidden rounded-2xl border border-[var(--hairline)] bg-card">
+            <div className="flex items-start justify-between gap-3 px-4 pt-4 sm:px-6 sm:pt-5">
+                <div className="min-w-0">
+                    <h2 className="text-[15px] font-semibold leading-6 text-[var(--ink-1)]">充值套餐</h2>
+                    <p className="mt-0.5 text-[12px] leading-5 text-[var(--ink-3)]">支付成功后积分与套餐立即到账，结算走独立安全支付页。</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2 pt-0.5">
+                    {!loading && products.length ? <span className="hidden text-[11px] text-[var(--ink-3)] sm:inline">{products.length} 个方案</span> : null}
+                    <Button size="small" className={profileSecondaryButtonClass} icon={<RefreshCw className="size-3.5" />} loading={loading} onClick={onRefresh} aria-label="刷新套餐" title="刷新套餐" />
+                </div>
+            </div>
+            <div className="px-3 pb-3 pt-3 sm:px-6 sm:pb-6 sm:pt-4">
+                {loading && !products.length ? <LoadingBlock /> : products.length ? <BillingPlanGrid products={products} onSelect={onCheckout} /> : <CompactEmptyState title="暂无已上架套餐" description="管理员上架商品后会显示在这里。" />}
+            </div>
+        </section>
     );
 }

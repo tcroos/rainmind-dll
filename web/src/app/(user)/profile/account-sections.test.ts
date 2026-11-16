@@ -51,7 +51,12 @@ describe("wallet and profile section split", () => {
         expect(center).toContain('id="wallet-plans"');
         // 余额卡下方直接就是套餐网格，充值不再多跳一层弹窗
         expect(center.indexOf('data-testid="wallet-balance-card"')).toBeLessThan(center.indexOf('id="wallet-plans"'));
-        expect(center).toContain("<BillingCenterSection");
+        // 套餐网格直接铺在钱包首屏，不再套一层「套餐中心」容器
+        expect(center).toContain("<BillingPlanGrid");
+        expect(center).toContain("function WalletRechargeSection(");
+        // 订单与积分并成一张可切换的账单卡，不再并排两块同权重面板
+        expect(center).toContain('data-testid="wallet-bills"');
+        expect(center).toContain("setBillTab");
     });
 
     it("keeps the sidebar account entry as the second way into the profile", async () => {
