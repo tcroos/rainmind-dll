@@ -12,7 +12,8 @@ describe("BillingPlanGrid", () => {
         expect(markup.match(/data-billing-plan-card=/g)).toHaveLength(9);
         expect(markup.match(/role="tab"/g)).toHaveLength(8);
         expect(markup).toContain('data-billing-plan-layout="modal"');
-        expect(markup).toContain("lg:grid-cols-4");
+        expect(markup).toContain("lg:grid-cols-3");
+        expect(markup).toContain("items-stretch");
         expect(markup).toContain('data-billing-plan-density="compact"');
     });
 });

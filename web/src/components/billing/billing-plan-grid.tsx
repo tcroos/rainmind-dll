@@ -168,49 +168,42 @@ function CompactPlanCard({ product, recommended, onSelect }: { product: BillingP
         <article
             data-billing-plan-card={product.id}
             data-billing-plan-density="compact"
-            className={`relative min-w-0 overflow-hidden rounded-lg border bg-white p-3.5 text-stone-950 shadow-[0_3px_12px_rgba(15,23,42,0.04)] transition hover:border-stone-400 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] sm:p-4 dark:bg-stone-950 dark:text-white dark:shadow-black/20 ${
-                recommended ? "border-[#8e9caf] ring-1 ring-[#8e9caf]/40 dark:border-[#78879d] dark:ring-[#78879d]/40" : "border-stone-200 dark:border-stone-800 dark:hover:border-stone-600"
+            className={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-white p-4 text-stone-950 shadow-[0_2px_10px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(15,23,42,0.09)] dark:bg-[#141416] dark:text-white dark:shadow-black/25 ${
+                recommended
+                    ? "border-[#e2671f]/50 bg-[#fffaf6] ring-1 ring-[#e2671f]/15 dark:border-[#e2671f]/40 dark:bg-[#1d1712] dark:ring-[#e2671f]/20"
+                    : "border-stone-200/90 dark:border-stone-800 dark:hover:border-stone-600"
             }`}
         >
-            <div className="flex min-h-7 items-start justify-between gap-2">
-                <h3 className="line-clamp-1 min-w-0 text-base font-semibold leading-6">{product.name}</h3>
+            <div className="flex min-h-6 items-start justify-between gap-2">
+                <h3 className="line-clamp-1 min-w-0 text-[15px] font-semibold leading-6">{product.name}</h3>
                 {promotion ? (
-                    <span className="max-w-[60%] truncate rounded-md border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/35 dark:text-rose-200">{promotion.label}</span>
+                    <span className="max-w-[60%] shrink-0 truncate rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-950/35 dark:text-rose-200">{promotion.label}</span>
                 ) : recommended ? (
-                    <span className="rounded-md border border-[#cfd7e3] bg-[#eef2f7] px-1.5 py-0.5 text-[10px] font-semibold text-[#52627a] dark:border-[#52627a]/60 dark:bg-[#66758e]/15 dark:text-[#d8dee8]">推荐</span>
+                    <span className="shrink-0 rounded-full bg-[#e2671f] px-2 py-0.5 text-[10px] font-semibold text-white">推荐</span>
                 ) : metadata.highlight ? (
-                    <span className="max-w-[60%] truncate text-[10px] font-medium text-stone-500 dark:text-stone-400">{metadata.highlight}</span>
+                    <span className="max-w-[60%] shrink-0 truncate text-[10px] font-medium text-stone-500 dark:text-stone-400">{metadata.highlight}</span>
                 ) : null}
             </div>
-            <p className="mt-0.5 line-clamp-2 text-xs leading-[18px] text-stone-500 dark:text-stone-400">{product.description || "适合持续完成多媒体创作与项目交付。"}</p>
 
-            <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-y border-stone-200 py-3 dark:border-stone-800">
-                <div className="min-w-0">
-                    <div className="flex min-w-0 flex-wrap items-end gap-x-1 gap-y-1" data-billing-plan-price>
-                        <span className="pb-0.5 text-xs font-medium">¥</span>
-                        <span className="min-w-0 break-all text-2xl font-semibold leading-none">{formatYuan(pricing.saleUnitAmountCents)}</span>
-                        <span className="pb-0.5 text-xs text-stone-500 dark:text-stone-400">/ {isPointsProduct ? "一次性" : periodLabel(product.periodDays)}</span>
-                    </div>
-                    {promotion ? (
-                        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[10px] text-stone-500 dark:text-stone-400">
-                            <span className="line-through">¥ {formatYuan(pricing.listUnitAmountCents)}</span>
-                            <span className="font-medium text-rose-600 dark:text-rose-300">省 ¥ {formatYuan(pricing.discountCents)}</span>
-                        </div>
-                    ) : null}
+            <p className="mt-1 line-clamp-2 min-h-9 text-xs leading-[18px] text-stone-500 dark:text-stone-400">{product.description || "适合持续完成多媒体创作与项目交付。"}</p>
+
+            <div className="mt-3 flex items-center justify-between gap-3 border-y border-stone-200/80 py-3 dark:border-stone-800">
+                <div className="flex min-w-0 items-baseline gap-1" data-billing-plan-price>
+                    <span className="text-xs font-medium text-stone-500 dark:text-stone-400">¥</span>
+                    <span className="min-w-0 break-all text-[30px] font-semibold leading-none tracking-[-0.02em]">{formatYuan(pricing.saleUnitAmountCents)}</span>
+                    <span className="text-xs text-stone-500 dark:text-stone-400">/ {isPointsProduct ? "一次性" : periodLabel(product.periodDays)}</span>
                 </div>
-                <div className="flex shrink-0 items-center gap-1.5 text-xs text-stone-600 dark:text-stone-300">
-                    <span className="grid size-5 place-items-center rounded-md bg-[#eef2f7] text-[#66758e] dark:bg-[#66758e]/15 dark:text-[#d8dee8]">
-                        <CreditSymbol className="text-[11px]" />
-                    </span>
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-stone-100 px-2 py-1 text-[11px] font-medium text-stone-600 dark:bg-white/[0.07] dark:text-stone-300">
+                    <CreditSymbol className="text-[11px]" />
                     <span className="whitespace-nowrap font-semibold text-stone-950 dark:text-white">{formatCreditAmount(product.pointsAmount)}</span>
                     <span className="hidden text-stone-500 lg:inline dark:text-stone-400">积分</span>
-                </div>
+                </span>
             </div>
 
-            <ul className="mt-3 space-y-1.5">
+            <ul className="mt-3 flex-1 space-y-1.5">
                 {features.map((line) => (
                     <li key={line} className="flex min-w-0 gap-2 text-xs leading-5 text-stone-600 dark:text-stone-300">
-                        <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-[#eef2f7] text-[#66758e] dark:bg-[#66758e]/15 dark:text-[#d8dee8]">
+                        <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-[#fdf0e6] text-[#c95616] dark:bg-[#e2671f]/15 dark:text-[#ffb27a]">
                             <Check className="size-3" />
                         </span>
                         <span className="line-clamp-1">{line}</span>
@@ -218,7 +211,7 @@ function CompactPlanCard({ product, recommended, onSelect }: { product: BillingP
                 ))}
             </ul>
 
-            <Button type="primary" data-billing-plan-action className="profile-primary-button mt-3 !h-9 w-full !rounded-md text-sm" onClick={() => onSelect(product)}>
+            <Button type="primary" data-billing-plan-action className="profile-primary-button mt-4 !h-10 w-full !rounded-xl text-sm" onClick={() => onSelect(product)}>
                 <span className="inline-flex items-center gap-1.5">
                     {isPointsProduct ? "立即充值" : "选择套餐"} <ArrowUpRight className="size-3.5" />
                 </span>
@@ -229,10 +222,10 @@ function CompactPlanCard({ product, recommended, onSelect }: { product: BillingP
 
 function gridClass(count: number, variant: "modal" | "page") {
     if (variant === "modal") {
-        if (count === 1) return "mx-auto max-w-sm items-start gap-3";
-        if (count === 2) return "mx-auto w-full grid-cols-2 items-start gap-3";
-        if (count === 3) return "mx-auto w-full items-start gap-3 md:grid-cols-3";
-        return "mx-auto w-full items-start gap-3 md:grid-cols-2 lg:grid-cols-4";
+        if (count === 1) return "mx-auto max-w-sm items-stretch gap-3";
+        if (count === 2) return "mx-auto w-full max-w-[720px] grid-cols-2 items-stretch gap-3";
+        if (count === 3) return "mx-auto w-full items-stretch gap-3 md:grid-cols-3";
+        return "mx-auto w-full items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3";
     }
     if (count === 1) return "mx-auto grid max-w-lg items-stretch gap-5";
     if (count === 2) return "mx-auto grid w-full max-w-[920px] items-stretch gap-5 md:grid-cols-2";

@@ -139,7 +139,7 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
 
     if (loading) {
         return (
-            <main className="h-full min-h-0 overflow-y-auto bg-[#f4f5f2] px-3 py-4 sm:px-4 sm:py-8 dark:bg-[#0f1012]">
+            <main className="h-full min-h-0 overflow-y-auto bg-[#fafafa] px-3 py-4 sm:px-4 sm:py-8 dark:bg-[#0f1012]">
                 <div className="mx-auto grid min-h-24 max-w-6xl place-items-center sm:min-h-[60dvh]">
                     <Spin />
                 </div>
@@ -149,7 +149,7 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
 
     if (!product) {
         return (
-            <main className="h-full min-h-0 overflow-y-auto bg-[#f4f5f2] px-3 py-4 sm:px-4 sm:py-8 dark:bg-[#0f1012]">
+            <main className="h-full min-h-0 overflow-y-auto bg-[#fafafa] px-3 py-4 sm:px-4 sm:py-8 dark:bg-[#0f1012]">
                 <div className="mx-auto max-w-xl rounded-xl border border-stone-200 bg-white p-4 text-center sm:rounded-3xl sm:p-8 dark:border-stone-800 dark:bg-stone-950">
                     <Empty description="套餐不存在或已下架" />
                     <Link href="/profile?section=billing" className="mt-5 inline-flex text-sm font-semibold text-stone-700 hover:text-stone-950 dark:text-stone-300 dark:hover:text-white">
@@ -161,12 +161,12 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
     }
 
     return (
-        <main className="h-full min-h-0 overflow-y-auto bg-[#f4f5f2] px-2 py-2 text-stone-950 sm:px-6 sm:py-8 dark:bg-[#0f1012] dark:text-stone-100">
+        <main className="h-full min-h-0 overflow-y-auto bg-[#fafafa] px-2 py-2 text-stone-950 sm:px-6 sm:py-8 dark:bg-[#0f1012] dark:text-stone-100">
             <div className="mx-auto w-full max-w-6xl pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-[calc(2rem+env(safe-area-inset-bottom))]">
                 <header className="mb-2.5 flex items-center justify-between gap-2 sm:mb-5 sm:gap-4">
                     <Link
                         href="/profile?section=billing"
-                        className="inline-flex h-9 items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 text-sm font-semibold text-stone-700 shadow-sm transition hover:border-stone-300 hover:bg-stone-50 hover:text-stone-950 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300 dark:hover:border-stone-700 dark:hover:bg-stone-900 dark:hover:text-white"
+                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-stone-200/80 bg-white px-3 text-[13px] font-medium text-stone-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-stone-300 hover:text-stone-950 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300 dark:hover:border-stone-700 dark:hover:text-white"
                     >
                         <ArrowLeft className="size-4" /> 返回套餐中心
                     </Link>
@@ -175,7 +175,7 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                     </span>
                 </header>
 
-                <div className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-[0_18px_54px_rgba(15,23,42,0.10)] sm:rounded-[1.75rem] sm:shadow-[0_30px_90px_rgba(15,23,42,0.12)] lg:grid lg:grid-cols-[0.86fr_1.14fr] dark:border-stone-800 dark:bg-stone-950 dark:shadow-black/35">
+                <div className="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-[0_20px_60px_-24px_rgba(15,23,42,0.18)] sm:rounded-[1.5rem] dark:border-stone-800 dark:bg-stone-950 dark:shadow-black/35 lg:grid lg:grid-cols-[0.86fr_1.14fr]">
                     <div className="m-1.5 grid grid-cols-2 gap-1 rounded-lg bg-stone-100 p-0.5 sm:hidden dark:bg-stone-900" role="tablist" aria-label="结算步骤">
                         <button
                             type="button"
@@ -197,20 +197,20 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                         </button>
                     </div>
 
-                    <section className={`${mobileSection === "summary" ? "block" : "hidden"} relative overflow-hidden bg-stone-950 p-2.5 text-white sm:block sm:p-8 lg:min-h-[34rem] dark:bg-stone-100 dark:text-stone-950`}>
-                        <div className="pointer-events-none absolute -left-24 -top-24 size-72 rounded-full bg-[#66758e]/30 blur-3xl dark:bg-[#66758e]/20" />
+                    <section className={`${mobileSection === "summary" ? "block" : "hidden"} relative overflow-hidden bg-[#141416] p-3 text-white sm:block sm:p-8 lg:min-h-[34rem] dark:bg-[#0c0c0e] dark:text-white`}>
+                        <div className="pointer-events-none absolute -left-28 -top-28 size-80 rounded-full bg-[#e2671f]/20 blur-3xl dark:bg-[#e2671f]/15" />
                         <div className="relative">
-                            <div className="text-[11px] font-semibold tracking-[0.2em] text-[#b8c4d6] dark:text-[#66758e]">VOZEB CHECKOUT</div>
-                            <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:mt-5 sm:text-3xl">{product.name}</h1>
-                            <p className="mt-3 max-w-md text-sm leading-6 text-stone-300 dark:text-stone-600">{product.description}</p>
+                            <div className="text-[11px] font-semibold tracking-[0.22em] text-[#ffb27a]">VOZEB CHECKOUT</div>
+                            <h1 className="mt-4 text-[26px] font-semibold leading-tight tracking-[-0.02em] sm:mt-6 sm:text-[32px]">{product.name}</h1>
+                            <p className="mt-3 max-w-md text-sm leading-6 text-white/55">{product.description}</p>
 
-                            <div className="mt-4 flex items-end gap-1 sm:mt-8">
-                                <span className="pb-1 text-sm">¥</span>
-                                <span className="text-3xl font-semibold sm:text-5xl">{formatYuan(pricing.payableAmountCents)}</span>
-                                <span className="pb-1 text-sm text-stone-400 dark:text-stone-500">今日需支付</span>
+                            <div className="mt-6 flex flex-wrap items-end gap-x-2 gap-y-1 sm:mt-9">
+                                <span className="pb-1.5 text-sm font-medium text-white/60">¥</span>
+                                <span className="text-[42px] font-semibold leading-none tracking-[-0.03em] sm:text-[54px]">{formatYuan(pricing.payableAmountCents)}</span>
+                                <span className="pb-1.5 text-xs text-white/45">今日需支付</span>
                             </div>
 
-                            <div className="mt-3 overflow-hidden rounded-lg border border-white/10 bg-white/[0.06] sm:mt-8 sm:rounded-2xl dark:border-stone-300 dark:bg-white">
+                            <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-white/[0.05] sm:mt-8 sm:rounded-2xl dark:border-white/10 dark:bg-white/[0.05]">
                                 <SummaryRow label="日常价" value={`¥ ${formatYuan(pricing.listAmountCents)}`} />
                                 <SummaryRow label="购买数量" value={`× ${quantity}`} />
                                 {pricing.promotionDiscountCents > 0 ? <SummaryRow label={pricing.promotion?.label || "活动优惠"} value={`- ¥ ${formatYuan(pricing.promotionDiscountCents)}`} /> : null}
@@ -220,14 +220,14 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                                 <SummaryRow label="权益周期" value={product.productKind === "points" ? "一次性到账" : product.periodDays ? `${product.periodDays * quantity} 天` : "长期有效"} />
                             </div>
 
-                            <div className="mt-6 flex items-start gap-2 text-xs leading-5 text-stone-400 dark:text-stone-600">
-                                <ReceiptText className="mt-0.5 size-4 shrink-0 text-[#b8c4d6] dark:text-[#66758e]" />
+                            <div className="mt-6 flex items-start gap-2 text-xs leading-5 text-white/40">
+                                <ReceiptText className="mt-0.5 size-4 shrink-0 text-[#ffb27a]" />
                                 订单创建后可在个人中心查看状态；支付成功后套餐与积分自动更新。
                             </div>
                         </div>
                     </section>
 
-                    <section className={`${mobileSection === "payment" ? "block" : "hidden"} p-2.5 sm:block sm:p-8`}>
+                    <section className={`${mobileSection === "payment" ? "flex" : "hidden"} flex-col p-3 sm:flex sm:p-8`}>
                         <div className="mb-4 flex items-end justify-between gap-3 border-b border-stone-200 pb-3 sm:hidden dark:border-stone-800">
                             <div className="min-w-0">
                                 <div className="text-[10px] font-semibold tracking-[0.16em] text-stone-400 dark:text-stone-500">当前订单</div>
@@ -241,14 +241,12 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                         {!checkout ? (
                             <>
                                 <div>
-                                    <div className="text-[11px] font-semibold tracking-[0.18em] text-stone-400 dark:text-stone-500">PAYMENT</div>
+                                    <div className="text-[11px] font-semibold tracking-[0.2em] text-[#e2671f]">PAYMENT</div>
                                     <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                                        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">选择支付方式</h2>
-                                        <Tag color="green" className="m-0">
-                                            <span className="inline-flex items-center gap-1">
-                                                <LockKeyhole className="size-3" /> 安全加密
-                                            </span>
-                                        </Tag>
+                                        <h2 className="text-xl font-semibold tracking-tight sm:text-[24px]">选择支付方式</h2>
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-[#fdf0e6] px-2 py-0.5 text-[11px] font-medium text-[#c95616] dark:bg-[#e2671f]/12 dark:text-[#ffb27a]">
+                                            <LockKeyhole className="size-3" /> 安全加密
+                                        </span>
                                     </div>
                                 </div>
 
@@ -261,11 +259,11 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                                                 key={item.value}
                                                 type="button"
                                                 aria-pressed={selected}
-                                                className={`flex w-full items-center gap-2.5 rounded-lg border p-2.5 text-left transition sm:rounded-2xl sm:p-4 ${selected ? "border-stone-950 bg-stone-50 ring-1 ring-stone-950 dark:border-stone-200 dark:bg-stone-900 dark:ring-stone-200" : "border-stone-200 bg-white hover:border-stone-400 hover:bg-stone-50 dark:border-stone-800 dark:bg-stone-950 dark:hover:border-stone-600 dark:hover:bg-stone-900/70"}`}
+                                                className={`flex w-full items-center gap-2.5 rounded-xl border p-3 text-left transition sm:rounded-2xl sm:p-4 ${selected ? "border-[#e2671f] bg-[#fffaf6] ring-1 ring-[#e2671f]/15 dark:border-[#e2671f]/60 dark:bg-[#1d1712]" : "border-stone-200/80 bg-white hover:border-stone-300 hover:bg-stone-50 dark:border-stone-800 dark:bg-stone-950 dark:hover:border-stone-600 dark:hover:bg-stone-900/70"}`}
                                                 onClick={() => setProvider(item.value)}
                                             >
                                                 <span
-                                                    className={`grid size-9 shrink-0 place-items-center rounded-lg sm:size-11 sm:rounded-xl ${selected ? "bg-stone-950 text-white dark:bg-white dark:text-stone-950" : "bg-stone-100 text-stone-600 dark:bg-stone-900 dark:text-stone-300"}`}
+                                                    className={`grid size-9 shrink-0 place-items-center rounded-lg sm:size-11 sm:rounded-xl ${selected ? "bg-[#e2671f] text-white" : "bg-stone-100 text-stone-600 dark:bg-stone-900 dark:text-stone-300"}`}
                                                 >
                                                     <Icon className="size-5" />
                                                 </span>
@@ -274,7 +272,7 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                                                     <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">{item.description}</span>
                                                 </span>
                                                 <span
-                                                    className={`grid size-6 shrink-0 place-items-center rounded-full border transition ${selected ? "border-emerald-600 bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 dark:border-emerald-500 dark:bg-emerald-500" : "border-stone-300 bg-white text-transparent dark:border-stone-700 dark:bg-stone-950"}`}
+                                                    className={`grid size-6 shrink-0 place-items-center rounded-full border transition ${selected ? "border-[#e2671f] bg-[#e2671f] text-white shadow-sm shadow-[#e2671f]/25" : "border-stone-300 bg-white text-transparent dark:border-stone-700 dark:bg-stone-950"}`}
                                                     aria-hidden="true"
                                                 >
                                                     <Check className="size-3.5" strokeWidth={2.5} />
@@ -284,11 +282,11 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                                     })}
                                 </div>
 
-                                <div className="mt-4 border-t border-stone-200 pt-4 sm:mt-7 sm:pt-7 dark:border-stone-800">
+                                <div className="mt-auto border-t border-stone-200 pt-4 sm:pt-7 dark:border-stone-800">
                                     <div className="mb-3 border-b border-stone-200 pb-3 dark:border-stone-800 sm:mb-4 sm:pb-4">
                                         <div className="flex min-w-0 items-center justify-between gap-3">
                                             <span className="inline-flex min-w-0 items-center gap-2 text-sm font-semibold">
-                                                <TicketPercent className="size-4 shrink-0 text-rose-600 dark:text-rose-300" />
+                                                <TicketPercent className="size-4 shrink-0 text-[#e2671f]" />
                                                 优惠券
                                                 {!couponsLoading ? <span className="text-xs font-normal text-stone-500 dark:text-stone-400">{coupons.filter(isCouponAvailable).length} 张可用</span> : null}
                                             </span>
@@ -361,7 +359,7 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
                                     </label>
 
                                     <div className="mt-4 border-t border-dashed border-stone-200 pt-4 sm:mt-7 sm:pt-6 dark:border-stone-800">
-                                        <Button block type="primary" size="large" className="profile-primary-button !h-10 sm:!h-12" loading={submitting} disabled={!provider || quoteLoading || Boolean(quoteError)} onClick={() => void submit()}>
+                                        <Button block type="primary" size="large" className="profile-primary-button !h-11 !rounded-xl sm:!h-12" loading={submitting} disabled={!provider || quoteLoading || Boolean(quoteError)} onClick={() => void submit()}>
                                             <span className="inline-flex items-center gap-2">
                                                 <LockKeyhole className="size-4" /> 确认订单并继续支付
                                             </span>
@@ -400,9 +398,9 @@ export function BillingCheckoutPage({ productId }: { productId: string }) {
 
 function SummaryRow({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
     return (
-        <div className="flex items-center justify-between gap-4 border-b border-white/10 px-3 py-2.5 text-sm last:border-b-0 sm:px-4 sm:py-3.5 dark:border-stone-200">
-            <span className="text-stone-400 dark:text-stone-500">{label}</span>
-            <span className="inline-flex items-center gap-1 font-semibold">
+        <div className="flex items-center justify-between gap-4 border-b border-white/[0.07] px-3.5 py-3 text-sm last:border-b-0 sm:px-4 sm:py-3.5">
+            <span className="text-white/45">{label}</span>
+            <span className="inline-flex items-center gap-1 font-semibold tabular-nums">
                 {icon}
                 {value}
             </span>
