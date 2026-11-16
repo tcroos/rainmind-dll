@@ -91,4 +91,13 @@ describe("marketing page login flow", () => {
     it("no longer ships a second unused login modal module", async () => {
         await expect(read("src/app/home/home-overlays.tsx")).rejects.toThrow();
     });
+
+    it("lets the hero glass reach the bottom of the first screen without a fade", async () => {
+        const backdrop = await read("src/app/home/hero-backdrop.module.css");
+        const css = await read("src/app/home/home.module.css");
+
+        // 底部渐隐会读成「画面被截断」，光场直接铺到首屏底边
+        expect(backdrop).not.toContain("mask-image");
+        expect(css).not.toContain(".heroShell::after");
+    });
 });

@@ -116,20 +116,8 @@
     position: relative;
 }
 
-/* 光场到内容带的过渡：canvas 自带的 mask 只淡出最后 14%，
- * 在 1440×894 下仍是一条看得见的切线。这里再压一层 220px 的暖色渐变，
- * 让玻璃「渗」进下面的米色底，而不是被切断。 */
-.heroShell::after {
-    background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--home-bg) 55%, transparent) 46%, var(--home-bg) 92%);
-    bottom: 0;
-    content: "";
-    height: clamp(96px, 15vh, 176px);
-    left: 0;
-    pointer-events: none;
-    position: absolute;
-    right: 0;
-    z-index: 0;
-}
+/* 首屏不再做任何底部过渡：光场（canvas）直接铺到首屏底边，
+ * 与下方内容带是干净的硬边，避免底部出现一条「被抹白」的渐隐带。 */
 
 .header {
     /* 悬浮玻璃胶囊需要离顶留白：贴着视口上沿时，胶囊的投影和顶部高光会被切掉。

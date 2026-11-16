@@ -1,17 +1,19 @@
 .backdrop {
-    inset: 0;
+    /* 底部多铺 20px：首屏容器高度是按 --home-header-h 推算的，
+     * 和导航实际高度有几个像素误差，不补这一点会在视口最下方留一条白缝。 */
+    inset: 0 0 -20px 0;
     overflow: hidden;
     pointer-events: none;
     position: absolute;
     z-index: 0;
 }
 
+/* 不做底部渐隐：光场要一直铺到首屏底边，
+ * 之前 mask 在最后 14% 淡出，视觉上像画面被截断了一块。 */
 .canvas {
-    -webkit-mask-image: linear-gradient(180deg, #000000 0%, #000000 86%, rgba(0, 0, 0, 0.4) 95%, transparent 100%);
     display: block;
     height: 100%;
     inset: 0;
-    mask-image: linear-gradient(180deg, #000000 0%, #000000 86%, rgba(0, 0, 0, 0.4) 95%, transparent 100%);
     position: absolute;
     width: 100%;
 }
