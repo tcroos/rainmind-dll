@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 
 import { useAnnouncementReadState } from "@/hooks/use-announcement-read-state";
 import { useAnnouncements } from "@/hooks/use-announcements";
-import { isPopupDismissed, markPopupDismissed } from "@/lib/announcement-dismiss";
+import { hasPopupSeen, isPopupDismissed, markPopupDismissed, markPopupSeen } from "@/lib/announcement-dismiss";
 import { isAnnouncementSuppressedPath } from "@/lib/announcement-routes";
 import { useUserStore } from "@/stores/use-user-store";
 import { AnnouncementGlyph } from "./announcement-glyph";
@@ -33,6 +33,10 @@ export function SiteAnnouncementPopup() {
 
     useEffect(() => {
         if (!announcements.length || !user || suppressed) return;
+        /* 会话级「已处理」优先于逐条标记：后台可能有不止一条公告勾了「登录后弹窗」，
+         * 关掉第一条后公告列表一刷新（React Query 重新取数）就会挑出第二条，
+         * 用户感知就是「关过了又在别的页面弹一次」。 */
+        if (hasPopupSeen("login")) return;
         const item = announcements.find((announcement) => announcement.popupAfterLogin && !isPopupDismissed(announcement.id, "login"));
         if (!item) return;
         setActiveId(item.id);
@@ -41,7 +45,12 @@ export function SiteAnnouncementPopup() {
 
     const close = () => {
         if (active) {
-            if (active.popupAfterLogin) markPopupDismissed(active.id, "login");
+            if (active.popupAfterLogin) {
+                markPopupDismissed(active.id, "login");
+                /* 一次关闭等于「这类提醒我看过了」，本标签页内不再自动弹，
+                 * 直到重新登录（登录/退出会清空这些标记）。 */
+                markPopupSeen("login");
+            }
             markRead(active.id);
         }
         setOpen(false);

@@ -35,6 +35,19 @@ describe("marketing page never auto-opens an announcement drawer", () => {
         expect(popup).not.toContain("首页弹窗");
     });
 
+    it("pops at most once per session even when several announcements are flagged", async () => {
+        const [popup, dismiss] = await Promise.all([read("src/components/layout/site-announcement-popup.tsx"), read("src/lib/announcement-dismiss.ts")]);
+
+        // 后台可能同时有多条公告勾了「登录后弹窗」；关掉第一条后列表一刷新就会挑出第二条，
+        // 用户感知就是「关过了又在别的页面弹一次」。会话级标记必须优先于逐条标记。
+        expect(popup).toContain('if (hasPopupSeen("login")) return;');
+        expect(popup).toContain('markPopupSeen("login")');
+        expect(dismiss).toContain("export function hasPopupSeen(");
+        expect(dismiss).toContain("export function markPopupSeen(");
+        // 重新登录要能重新看到：清理函数必须覆盖 seen 前缀
+        expect(dismiss).toContain("key.startsWith(POPUP_SEEN_PREFIX)");
+    });
+
     it("removes the now-dead 首页弹窗 switch from the admin console", async () => {
         const admin = await read("src/components/admin/admin-content-sections.tsx");
 

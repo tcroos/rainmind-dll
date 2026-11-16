@@ -14,6 +14,9 @@
 
 export const ANNOUNCEMENT_BAR_DISMISS_KEY = "vozeb-pro:announcement-bar-dismissed";
 const POPUP_DISMISS_PREFIX = "vozeb-pro:announcement-dismissed:";
+/** 「本会话已经看过登录后弹窗」：多条公告都勾了该选项时，
+ *  关掉第一条之后 list 一刷新又会挑出第二条，必须记一个会话级标记。 */
+const POPUP_SEEN_PREFIX = "vozeb-pro:announcement-popup-seen:";
 
 function storage(kind: "sessionStorage" | "localStorage"): Storage | null {
     if (typeof window === "undefined") return null;
@@ -71,9 +74,29 @@ export function markPopupDismissed(id: string, context: string) {
     }
 }
 
+/**
+ * 当前标签页是否已经处理过「登录后弹窗」。
+ * 按 context 存：现在只有 login，之后若有别的弹窗场景可以分开记。
+ */
+export function hasPopupSeen(context: string) {
+    try {
+        return storage("sessionStorage")?.getItem(`${POPUP_SEEN_PREFIX}${context}`) === "1";
+    } catch {
+        return false;
+    }
+}
+
+export function markPopupSeen(context: string) {
+    try {
+        storage("sessionStorage")?.setItem(`${POPUP_SEEN_PREFIX}${context}`, "1");
+    } catch {
+        // 忽略存储不可写
+    }
+}
+
 /** 登录成功 / 退出登录时调用：让下一次进入界面一定重新展示公告。 */
 export function clearAnnouncementDismissState() {
-    const isAnnouncementKey = (key: string) => key === ANNOUNCEMENT_BAR_DISMISS_KEY || key.startsWith(POPUP_DISMISS_PREFIX);
+    const isAnnouncementKey = (key: string) => key === ANNOUNCEMENT_BAR_DISMISS_KEY || key.startsWith(POPUP_DISMISS_PREFIX) || key.startsWith(POPUP_SEEN_PREFIX);
 
     try {
         storage("sessionStorage")?.removeItem(ANNOUNCEMENT_BAR_DISMISS_KEY);
