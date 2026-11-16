@@ -92,12 +92,14 @@ describe("marketing page login flow", () => {
         await expect(read("src/app/home/home-overlays.tsx")).rejects.toThrow();
     });
 
-    it("lets the hero glass reach the bottom of the first screen without a fade", async () => {
+    it("softens the hero bottom with a thin overlay instead of a canvas mask", async () => {
         const backdrop = await read("src/app/home/hero-backdrop.module.css");
         const css = await read("src/app/home/home.module.css");
 
-        // 底部渐隐会读成「画面被截断」，光场直接铺到首屏底边
+        // 蒙版会让整块 WebGL 画布多走一遍合成，条纹动画明显不如无蒙版时顺
         expect(backdrop).not.toContain("mask-image");
-        expect(css).not.toContain(".heroShell::after");
+        // 收口只在最底部 ~88px，且从全透明起，不能糊掉上方的光场
+        expect(css).toContain(".heroShell::after");
+        expect(css).toContain("height: clamp(48px, 7vh, 88px);");
     });
 });

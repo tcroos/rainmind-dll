@@ -8,16 +8,18 @@ import { X } from "lucide-react";
 import { useAnnouncementReadState } from "@/hooks/use-announcement-read-state";
 import { useAnnouncements } from "@/hooks/use-announcements";
 import { isPopupDismissed, markPopupDismissed } from "@/lib/announcement-dismiss";
+import { isAnnouncementSuppressedPath } from "@/lib/announcement-routes";
 import { useUserStore } from "@/stores/use-user-store";
 import { AnnouncementGlyph } from "./announcement-glyph";
 
 /**
- * 只在「登录后的工作台」按配置弹一次公告。营销页不弹任何公告：
- * 外层 ClientRootInit 在 "/" 直接不挂载本组件，这里再挡一道 pathname，
- * 免得以后组件被复用到别的公开页又冒出抽屉。
+ * 只在「登录后的工作台」按配置弹一次公告。营销页与登录链路（/login、/register、
+ * /forgot-password）都不弹：外层 ClientRootInit 已经不挂载本组件，这里再挡一道
+ * pathname，免得以后组件被复用到别的公开页又冒出抽屉。
  */
 export function SiteAnnouncementPopup() {
     const pathname = usePathname();
+    const suppressed = isAnnouncementSuppressedPath(pathname);
     const user = useUserStore((state) => state.user);
     const { data: announcements = [] } = useAnnouncements({ enabled: Boolean(user) });
     const { markRead } = useAnnouncementReadState();
@@ -30,12 +32,12 @@ export function SiteAnnouncementPopup() {
     const active = useMemo(() => announcements.find((item) => item.id === activeId) || null, [activeId, announcements]);
 
     useEffect(() => {
-        if (!announcements.length || !user || pathname === "/") return;
+        if (!announcements.length || !user || suppressed) return;
         const item = announcements.find((announcement) => announcement.popupAfterLogin && !isPopupDismissed(announcement.id, "login"));
         if (!item) return;
         setActiveId(item.id);
         setOpen(true);
-    }, [announcements, pathname, user]);
+    }, [announcements, suppressed, user]);
 
     const close = () => {
         if (active) {
@@ -44,6 +46,8 @@ export function SiteAnnouncementPopup() {
         }
         setOpen(false);
     };
+
+    if (suppressed) return null;
 
     return (
         /* 和消息中心同一套右侧浮层：登录后的公告也不再在屏幕中央弹对话框 */

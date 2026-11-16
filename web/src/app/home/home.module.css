@@ -116,8 +116,20 @@
     position: relative;
 }
 
-/* 首屏不再做任何底部过渡：光场（canvas）直接铺到首屏底边，
- * 与下方内容带是干净的硬边，避免底部出现一条「被抹白」的渐隐带。 */
+/* 首屏底部只留一层很薄的收口：高度压到 88px 以内、起点完全透明、
+ * 到最底边才吃满页面底色。不用 canvas 的 mask-image，
+ * 蒙版会让整块 WebGL 画布走一遍合成，条纹动画明显不如没有蒙版时顺。 */
+.heroShell::after {
+    background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--home-bg) 34%, transparent) 58%, color-mix(in srgb, var(--home-bg) 92%, transparent) 100%);
+    bottom: 0;
+    content: "";
+    height: clamp(48px, 7vh, 88px);
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    z-index: 0;
+}
 
 .header {
     /* 悬浮玻璃胶囊需要离顶留白：贴着视口上沿时，胶囊的投影和顶部高光会被切掉。
