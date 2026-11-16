@@ -10,7 +10,8 @@
  * - 竖屏/方形：几乎不裁，最贴合竖版栏位；
  * - 横屏：左右会被裁掉较多，主体尽量放中间。
  *
- * 栏位比例是 420×560（3:4），最短 560px 高，所以原生分辨率建议 ≥ 1080 宽。
+ * 左栏占登录页约 55% 宽、满屏高（窄屏下是上下分栏），视频按 cover 裁切，
+ * 原生分辨率建议 ≥ 1080 宽，避免大屏发虚。
  */
 const DEFAULT_AUTH_SHOWCASE_VIDEO_URL = "https://v4-kling.kechuangai.com/kcdn/cdn-kcdn112452/login/zh.mp4";
 

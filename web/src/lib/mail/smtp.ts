@@ -75,7 +75,8 @@ export async function verifySmtpConnection(mail: MailSettings) {
     }
 }
 
-export async function sendSmtpMail({ mail, to, subject, text, siteTitle }: SendSmtpMailInput) {    const host = mail.host.trim();
+export async function sendSmtpMail({ mail, to, subject, text, siteTitle }: SendSmtpMailInput) {
+    const host = mail.host.trim();
     const port = Number(mail.port) || 465;
     const username = mail.username.trim();
     const password = mail.password;
