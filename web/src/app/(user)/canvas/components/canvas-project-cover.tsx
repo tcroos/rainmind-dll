@@ -73,28 +73,15 @@ function CoverTile({ preview, allowVideo, className }: { preview: CanvasProjectP
 }
 
 export function CanvasCoverPlaceholder({ className }: { className?: string }) {
+    /* 空白画布的封面不放节点流程图：库里同时存在多张空画布时，
+     * 一排一模一样的「节点 + 连线」会被读成新手引导图，而不是"这里什么都没有"。
+     * 改成一张安静的点阵画板，用密度和留白表达"空白"。 */
     return (
         <div className={cn("relative size-full overflow-hidden bg-[linear-gradient(145deg,var(--surface-soft)_0%,var(--surface-inset)_100%)]", className)}>
-            <svg
-                viewBox="0 0 240 150"
-                className="absolute inset-0 size-full text-[rgba(17,17,19,0.52)] dark:text-[rgba(255,255,255,0.5)]"
-                fill="none"
+            <div
                 aria-hidden
-            >
-                <g stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.2" strokeLinecap="round">
-                    <path d="M74 62h34a6 6 0 0 1 6 6v14" />
-                    <path d="M120 82h22" />
-                    <path d="M154 62h-8a6 6 0 0 0-6 6v14" />
-                    <path d="M74 106h30" />
-                    <path d="M148 106h18" />
-                </g>
-                <g fill="currentColor">
-                    <rect x="52" y="48" width="22" height="28" rx="6" fillOpacity="0.42" />
-                    <rect x="140" y="48" width="22" height="28" rx="6" fillOpacity="0.42" />
-                    <rect x="106" y="76" width="28" height="20" rx="6" fillOpacity="0.72" />
-                    <rect x="104" y="98" width="34" height="18" rx="6" fillOpacity="0.55" />
-                </g>
-            </svg>
+                className="absolute inset-0 bg-[radial-gradient(circle,rgba(17,17,19,0.085)_1px,transparent_1px)] bg-[size:14px_14px] dark:bg-[radial-gradient(circle,rgba(255,255,255,0.075)_1px,transparent_1px)]"
+            />
         </div>
     );
 }

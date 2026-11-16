@@ -32,7 +32,7 @@ export function HomeGallery() {
         <section id="inspiration" className={styles.section} aria-labelledby="home-gallery-title">
             <SectionHeading
                 id="home-gallery-title"
-                index="02"
+                index="03"
                 label="创作者作品"
                 title={emptyAll ? "从一个场景开始" : "看看别人做出来的"}
                 subtitle={emptyAll ? "作品广场还在积累第一批作品。选一个创作场景，下一个出现在这里的就是你的。" : "点开看大图和完整视频，找到你想要的那种感觉"}
@@ -161,30 +161,25 @@ const GALLERY_STARTERS = [
 
 function GalleryStarters() {
     const { startCreating } = useHomeActions();
+    /* 空态不再铺六张渐变占位卡：那是「初始化素材」，不是作品。
+     * 改成两列共六行的文字入口，靠发丝线分组，点一下仍然带着提示词进创作。 */
     return (
-        <SpotlightGrid className={styles.starterGrid}>
-            {GALLERY_STARTERS.map((item, index) => (
-                <Reveal key={item.id} delay={index * 0.06} y={16} className={styles.revealItem}>
-                    <button type="button" className={styles.starterCard} data-spotlight onClick={() => startCreating(item.prompt, "agent")}>
-                        {/* 空态也要有「图像重量」：一张纯 CSS 的构图，比四行文字更像作品 */}
-                        <span className={styles.starterCover} aria-hidden="true" data-tone={index % 3} data-motif={index}>
-                            <i />
-                            <b />
-                        </span>
-                        <span className={styles.starterMeta}>
-                            <span className={styles.starterIndex} aria-hidden="true">
-                                {String(index + 1).padStart(2, "0")}
-                            </span>
-                            <span className={styles.starterGo} aria-hidden="true">
-                                <ArrowUpRight />
-                            </span>
-                        </span>
-                        <span className={styles.starterTitle}>{item.title}</span>
-                        <span className={styles.starterDesc}>{item.desc}</span>
-                    </button>
-                </Reveal>
+        <div className="mt-8 grid sm:grid-cols-2 sm:gap-x-10">
+            {GALLERY_STARTERS.map((item) => (
+                <button
+                    key={item.id}
+                    type="button"
+                    className="group flex items-center justify-between gap-3 border-t border-[var(--home-border)] py-4 text-left transition-colors hover:border-[var(--home-text)]/25"
+                    onClick={() => startCreating(item.prompt, "agent")}
+                >
+                    <span className="min-w-0">
+                        <span className="block text-[14px] font-medium tracking-[-0.01em] text-[var(--home-text)]">{item.title}</span>
+                        <span className="mt-0.5 block truncate text-[12px] leading-5 text-[var(--home-muted)]">{item.desc}</span>
+                    </span>
+                    <ArrowUpRight className="size-3.5 shrink-0 text-[var(--home-muted)] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+                </button>
             ))}
-        </SpotlightGrid>
+        </div>
     );
 }
 

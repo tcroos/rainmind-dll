@@ -8,7 +8,7 @@ import { HeroBackdrop } from "./home/hero-backdrop";
 import { HomeCta, HomeFooter } from "./home/home-footer";
 import { HomeGallery } from "./home/home-gallery";
 import { HomeHeader } from "./home/home-header";
-import { HomeAdvantagesSection, HomeContentAura, HomeStepsSection } from "./home/home-static-sections";
+import { HomeAdvantagesSection, HomeContentAura, HomeIntroSection, HomeStepsSection } from "./home/home-static-sections";
 import styles from "./home/home.module.css";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,7 @@ export default async function HomePage() {
                 </div>
                 <div className={styles.contentBand}>
                     <HomeContentAura />
+                    <HomeIntroSection />
                     <HomeStepsSection />
                     <HomeGallery />
                     <HomeAdvantagesSection />

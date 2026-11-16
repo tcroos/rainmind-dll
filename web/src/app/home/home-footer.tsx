@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Mail, Send } from "lucide-react";
 
 import { SiteLogo } from "@/components/layout/site-logo";
-import { HOME_NAVIGATION, type HomeNavigationItem } from "./home-data";
+import type { HomeNavigationItem } from "./home-data";
 import { useHomeActions } from "./home-actions";
 import { Reveal } from "./home-motion";
 import styles from "./home.module.css";
@@ -38,8 +38,15 @@ export function HomeFooter() {
         { label: "隐私政策", href: site.privacyUrl?.trim() || "/privacy" },
         { label: "服务条款", href: site.termsUrl?.trim() || "/terms" },
     ];
+    /* 页脚不和顶部共用同一份导航：定价、关于从顶部撤下后仍需要入口，
+     * 「联系我们」是首屏内的锚点动作，也不适合出现在页脚。 */
+    const productLinks: readonly HomeNavigationItem[] = [
+        { label: "作品广场", href: "/gallery", action: "link" },
+        { label: "定价", href: "/billing", action: "billing" },
+        { label: "关于", href: "/about", action: "link" },
+    ];
     const navigationGroups: Array<{ title: string; items: readonly HomeNavigationItem[] }> = [
-        { title: "产品", items: HOME_NAVIGATION },
+        { title: "产品", items: productLinks },
         { title: "平台", items: [{ label: "公告中心", href: "/announcements", action: "link" }] },
     ];
 

@@ -21,14 +21,13 @@ export type HomeNavigationItem = {
     action: "link" | "protected" | "billing" | "external" | "contact";
 };
 
-/* 官网导航只用最短的栏目名：作品 → API → 定价 → 关于 → 联系，
- * 具体创作入口交给首屏和右侧 CTA，不在导航里堆功能名。 */
+/* 官网导航只留三个栏目：作品 → API → 联系我们。
+ * 定价与关于从顶部撤下（价格在创作页与钱包内可见，关于页留在页脚），
+ * 顶部不再堆五个长度不一的条目。 */
 export const HOME_NAVIGATION = [
     { label: "作品", href: "/gallery", action: "link" },
     { label: "API", href: "https://api.rainmind.net/", action: "external" },
-    { label: "定价", href: "/billing", action: "billing" },
-    { label: "关于", href: "/about", action: "link" },
-    { label: "联系", href: "#contact", action: "contact" },
+    { label: "联系我们", href: "#contact", action: "contact" },
 ] as const satisfies readonly HomeNavigationItem[];
 
 export const HOME_CREATION_MODES = [

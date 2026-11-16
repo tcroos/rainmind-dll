@@ -14,11 +14,9 @@ export function CanvasCreateCard({ onCreate, loading = false }: { onCreate: () =
                 <span className="grid size-10 place-items-center rounded-full bg-[var(--surface-panel)] text-[var(--ink-1)] shadow-[0_1px_2px_rgba(17,17,19,0.06)] transition-transform duration-200 group-hover/create:scale-105">
                     {loading ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-[18px]" />}
                 </span>
-                <span className="hidden text-[11px] leading-4 text-[var(--ink-3)] sm:block">从空白开始搭节点</span>
             </span>
             <span className="mt-2.5 block min-w-0 px-0.5">
                 <span className="block truncate text-[14px] font-medium leading-[1.5] text-[var(--ink-1)]">{loading ? "正在创建…" : "新建画布"}</span>
-                <span className="mt-0.5 block truncate text-[12px] leading-[1.4] text-[var(--ink-2)]/80">空白流程，从第一个节点开始</span>
             </span>
         </button>
     );
