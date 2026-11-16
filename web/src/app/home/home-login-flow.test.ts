@@ -58,19 +58,21 @@ describe("marketing page login flow", () => {
         expect(scrolledBlock).not.toContain("border-color");
     });
 
-    it("keeps three header entries and moves pricing plus about to the footer", async () => {
+    it("keeps only API service and contact in the header", async () => {
         const [data, footer] = await Promise.all([read("src/app/home/home-data.ts"), read("src/app/home/home-footer.tsx")]);
 
-        expect(data).toContain('{ label: "作品", href: "/gallery", action: "link" }');
-        expect(data).toContain('{ label: "API", href: "https://api.rainmind.net/", action: "external" }');
+        expect(data).toContain('{ label: "API 服务", href: "https://api.rainmind.net/", action: "external" }');
         expect(data).toContain('{ label: "联系我们", href: "#contact", action: "contact" }');
-        // 顶部只留三个栏目，定价与关于从头部撤下
+        // 顶部只剩两个对外栏目：作品、定价、关于都不在头部
+        expect(data).not.toContain('{ label: "作品"');
         expect(data).not.toContain('{ label: "定价"');
         expect(data).not.toContain('{ label: "关于"');
+        expect(data).not.toContain('{ label: "API",');
         expect(data).not.toContain('{ label: "联系",');
         expect(data).not.toContain('label: "AI 创作"');
         expect(data).not.toContain('label: "短剧制作"');
-        // 页脚仍保留定价与关于入口
+        // 页脚仍保留作品广场、定价与关于入口
+        expect(footer).toContain('{ label: "作品广场", href: "/gallery", action: "link" }');
         expect(footer).toContain('{ label: "定价", href: "/billing", action: "billing" }');
         expect(footer).toContain('{ label: "关于", href: "/about", action: "link" }');
 
