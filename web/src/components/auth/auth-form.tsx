@@ -7,7 +7,6 @@ import { ArrowLeft, ArrowRight, Gift, LockKeyhole, Mail, ShieldCheck, UserRound 
 import { App, Button, Checkbox, Input } from "antd";
 
 import { AuthShowcaseVideo } from "@/components/auth/auth-showcase-video";
-import { SiteLogo } from "@/components/layout/site-logo";
 import { clearAnnouncementDismissState } from "@/lib/announcement-dismiss";
 import { DEFAULT_SITE_TITLE } from "@/lib/site-brand";
 import { usePublicSessionStore } from "@/stores/use-public-session-store";
@@ -53,8 +52,8 @@ export function AuthForm({
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [emailCode, setEmailCode] = useState("");
-    const [displayName, setDisplayName] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [totpCode, setTotpCode] = useState("");
     const [mfaRequired, setMfaRequired] = useState(false);
     const [referralCode, setReferralCode] = useState(initialReferralCode);
@@ -66,10 +65,19 @@ export function AuthForm({
     const isRegister = mode === "register";
     const disabled = isRegister && !registrationEnabled;
     const installTokenReady = !firstUser || installToken.trim().length >= 32;
+    const passwordMismatch = isRegister && confirmPassword.length > 0 && password !== confirmPassword;
 
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (disabled) return;
+        if (isRegister && password !== confirmPassword) {
+            message.error("两次输入的密码不一致");
+            return;
+        }
+        if (isRegister && !firstUser && !policyAccepted) {
+            message.warning("请先阅读并同意服务条款和隐私政策");
+            return;
+        }
         setSubmitting(true);
         try {
             const response = await fetch(isRegister ? "/api/auth/register" : "/api/auth/login", {
@@ -79,7 +87,6 @@ export function AuthForm({
                     username,
                     email,
                     emailCode,
-                    displayName,
                     password,
                     totpCode: !isRegister && mfaRequired ? totpCode : undefined,
                     referralCode: isRegister && !firstUser ? referralCode : undefined,
@@ -133,7 +140,7 @@ export function AuthForm({
 
     const form = (
         <section className={cn("auth-panel flex min-h-full items-center", variant === "embedded" ? "p-6 sm:p-7" : "p-8 sm:p-10", className)}>
-            <form onSubmit={submit} className={cn("auth-form-body w-full", variant === "embedded" ? "space-y-4" : "space-y-6")}>
+            <form onSubmit={submit} className={cn("auth-form-body w-full", variant === "embedded" ? "space-y-4" : "space-y-6", isRegister && !firstUser && "auth-form-register")}>
                 {headerSlot}
                 {/* 标准登录页表头：品牌名做主标题，下面一句说明用途的提示语。
                     旧副标题是一串功能罗列的营销文案，摆在登录框里不像提示语。 */}
@@ -202,26 +209,22 @@ export function AuthForm({
                         </label>
                         <label className="block space-y-2">
                             <span className="text-sm font-medium text-stone-700 dark:text-stone-200">邮箱验证码</span>
-                            <Input.Search
+                            <Input
                                 size="large"
+                                prefix={<ShieldCheck className="size-4 text-stone-500" />}
                                 value={emailCode}
                                 onChange={(event) => setEmailCode(event.target.value)}
                                 placeholder="6 位验证码"
-                                enterButton={sendingCode ? "发送中" : "获取验证码"}
-                                loading={sendingCode}
                                 disabled={submitting || disabled}
-                                onSearch={() => void sendEmailCode()}
+                                suffix={
+                                    <button type="button" className="auth-code-button" disabled={sendingCode || submitting || disabled || !email.trim()} onClick={() => void sendEmailCode()}>
+                                        {sendingCode ? "发送中" : "获取验证码"}
+                                    </button>
+                                }
                                 required
                             />
                         </label>
                     </div>
-                ) : null}
-
-                {isRegister ? (
-                    <label className="block space-y-2">
-                        <span className="text-sm font-medium text-stone-700 dark:text-stone-200">昵称（选填）</span>
-                        <Input size="large" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="显示在账号菜单" autoComplete="name" disabled={submitting || disabled} />
-                    </label>
                 ) : null}
 
                 {isRegister && !firstUser && referralOpen ? (
@@ -241,8 +244,15 @@ export function AuthForm({
                     </label>
                 ) : null}
 
-                <label className="block space-y-2">
-                    <span className="text-sm font-medium text-stone-700 dark:text-stone-200">密码</span>
+                <div className="space-y-2">
+                    <div className="auth-label-row">
+                        <span className="text-sm font-medium text-stone-700 dark:text-stone-200">密码</span>
+                        {!isRegister && !mfaRequired ? (
+                            <Link href="/forgot-password" className="auth-inline-link">
+                                忘记密码？
+                            </Link>
+                        ) : null}
+                    </div>
                     <Input.Password
                         size="large"
                         prefix={<LockKeyhole className="size-4 text-stone-500" />}
@@ -257,7 +267,25 @@ export function AuthForm({
                         disabled={submitting || disabled}
                         required
                     />
-                </label>
+                </div>
+
+                {isRegister ? (
+                    <div className="space-y-2">
+                        <span className="text-sm font-medium text-stone-700 dark:text-stone-200">确认密码</span>
+                        <Input.Password
+                            size="large"
+                            prefix={<LockKeyhole className="size-4 text-stone-500" />}
+                            value={confirmPassword}
+                            onChange={(event) => setConfirmPassword(event.target.value)}
+                            placeholder="再次输入密码"
+                            autoComplete="new-password"
+                            status={passwordMismatch ? "error" : undefined}
+                            disabled={submitting || disabled}
+                            required
+                        />
+                        {passwordMismatch ? <p className="auth-field-error">两次输入的密码不一致</p> : null}
+                    </div>
+                ) : null}
 
 
                 {!isRegister && mfaRequired ? (
@@ -300,7 +328,7 @@ export function AuthForm({
                     size="large"
                     block
                     loading={submitting}
-                    disabled={disabled || !installTokenReady || (isRegister && !firstUser && !policyAccepted)}
+                    disabled={disabled || !installTokenReady}
                     icon={<ArrowRight className="size-4" />}
                     iconPlacement="end"
                 >
@@ -328,10 +356,6 @@ export function AuthForm({
                             <Link href="/register" className="font-medium text-stone-950 hover:underline dark:text-white">
                                 立即注册
                             </Link>
-                            <span className="mx-2 text-stone-300 dark:text-stone-700">/</span>
-                            <Link href="/forgot-password" className="font-medium text-stone-950 hover:underline dark:text-white">
-                                忘记密码
-                            </Link>
                         </>
                     )}
                 </div>
@@ -354,12 +378,7 @@ export function AuthForm({
                             <ArrowLeft className="size-4" />
                             <span>返回首页</span>
                         </Link>
-                        <div className="auth-page-card-inner">
-                            <Link href="/" aria-label={site.title} className="auth-page-logo-link">
-                                <SiteLogo logoUrl={site.logoUrl} className="auth-page-logo" />
-                            </Link>
-                            {form}
-                        </div>
+                        <div className="auth-page-card-inner">{form}</div>
                     </div>
                 </div>
             </div>

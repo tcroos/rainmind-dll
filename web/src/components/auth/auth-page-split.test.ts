@@ -49,7 +49,7 @@ describe("login page split layout", () => {
         expect(authForm).toContain('className="auth-page-card-inner"');
         expect(css).toContain(".auth-page-card-inner {");
         expect(css).toContain("margin: auto;");
-        expect(css).toContain("max-width: 400px;");
+        expect(css).toContain("max-width: 384px;");
         // 右栏内边距随视口伸缩，不是一档写死
         expect(css).toContain("padding: clamp(32px, 6vh, 72px) clamp(24px, 5vw, 64px);");
         // 返回入口钉在右栏右上角，不再是卡片下方的一行小字
@@ -123,6 +123,21 @@ describe("login page split layout", () => {
         // 深色态与登录弹窗各自的底色都要覆盖，否则会刷出一条白/黑条
         expect(outside).toContain("--auth-autofill-surface: #1c1c1c;");
         expect(outside).toContain(".ant-modal.landing-auth-modal .auth-panel input:-webkit-autofill");
+    });
+
+    it("drops the optional nickname and verifies the repeated password", async () => {
+        const authForm = await read("src/components/auth/auth-form.tsx");
+
+        // 注册不再收集昵称，显示名由用户名承担
+        expect(authForm).not.toContain("昵称（选填）");
+        expect(authForm).not.toContain("displayName");
+        // 注册增加二次密码输入，提交前校验一致
+        expect(authForm).toContain("确认密码");
+        expect(authForm).toContain("confirmPassword");
+        expect(authForm).toContain("两次输入的密码不一致");
+        expect(authForm).toContain("请先阅读并同意服务条款和隐私政策");
+        // 协议未勾选不再把按钮灰掉，改为点击时提示
+        expect(authForm).toContain("disabled={disabled || !installTokenReady}");
     });
 
     it("exposes a replaceable video link", async () => {
