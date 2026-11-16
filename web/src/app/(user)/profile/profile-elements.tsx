@@ -34,7 +34,6 @@ export const profileSections: Array<{ key: ProfileSectionKey; label: string; des
     { key: "help", label: "帮助中心", description: "使用指南、常见问题与账号支持。", shortDescription: "指南与常见问题", icon: <CircleHelp className="size-4" /> },
 
     { key: "wallet", label: "钱包概览", description: "积分余额、套餐与快捷充值入口。", shortDescription: "余额与充值", icon: <Wallet className="size-4" /> },
-    { key: "billing", label: "充值套餐", description: "选择套餐或积分包，进入独立安全结算。", shortDescription: "购买套餐", icon: <CreditCard className="size-4" /> },
     { key: "coupons", label: "我的优惠券", description: "领取优惠券并查看可用、锁定、已使用和过期状态。", shortDescription: "领取与状态", icon: <TicketPercent className="size-4" /> },
     { key: "orders", label: "订单记录", description: "查看所有充值订单、支付状态和开通结果。", shortDescription: "收款状态", icon: <ReceiptText className="size-4" /> },
     { key: "points", label: "积分记录", description: "查看每日积分、充值赠送、退款退回和管理员调整流水。", shortDescription: "余额流水", icon: <CreditSymbol className="text-sm" /> },

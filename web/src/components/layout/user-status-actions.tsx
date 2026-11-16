@@ -376,7 +376,7 @@ function AccountMenuPanel({
                            Tailwind 的 text-* 在 @layer 里会被它压掉，黑底黑字就这么来的。 */
                         style={{ color: "var(--surface-panel)" }}
                         className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md bg-[#18181b] px-2.5 text-[11px] font-semibold transition hover:opacity-90 dark:bg-[#ffffff]"
-                        onClick={() => onNavigate("/wallet")}
+                        onClick={() => onNavigate("/wallet?section=billing")}
                         aria-label={planActionLabel}
                         title={planActionLabel}
                     >

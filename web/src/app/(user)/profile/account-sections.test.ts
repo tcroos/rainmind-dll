@@ -44,19 +44,22 @@ describe("wallet and profile section split", () => {
         expect(wallet).toContain('<AccountCenter scope="wallet" />');
     });
 
-    it("puts the balance card and the plan grid on the first wallet screen", async () => {
+    it("recharges through the shared plan modal instead of a plan grid on the page", async () => {
         const center = await read("src/app/(user)/profile/account-center.tsx");
+        const elements = await read("src/app/(user)/profile/profile-elements.tsx");
 
+        // 钱包首屏只留余额卡 + 账单，套餐走和官网同一个弹窗
         expect(center).toContain('data-testid="wallet-balance-card"');
-        expect(center).toContain('id="wallet-plans"');
-        // 余额卡下方直接就是套餐网格，充值不再多跳一层弹窗
-        expect(center.indexOf('data-testid="wallet-balance-card"')).toBeLessThan(center.indexOf('id="wallet-plans"'));
-        // 套餐网格直接铺在钱包首屏，不再套一层「套餐中心」容器
-        expect(center).toContain("<BillingPlanGrid");
-        expect(center).toContain("function WalletRechargeSection(");
-        // 订单与积分并成一张可切换的账单卡，不再并排两块同权重面板
+        expect(center).toContain("<BillingPlansModal");
+        expect(center).not.toContain("BillingPlanGrid");
+        expect(center).not.toContain('id="wallet-plans"');
         expect(center).toContain('data-testid="wallet-bills"');
         expect(center).toContain("setBillTab");
+        // 老链接 ?section=billing 仍会打开弹窗，并把地址清成 /wallet
+        expect(center).toContain('requestedSection === "billing"');
+        expect(center).toContain('router.replace("/wallet", { scroll: false })');
+        // 导航里不再有「充值套餐」，避免点进去是空页
+        expect(elements).not.toContain('label: "充值套餐"');
     });
 
     it("keeps the sidebar account entry as the second way into the profile", async () => {
