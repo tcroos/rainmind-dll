@@ -23,6 +23,20 @@ describe("canvas library layout", () => {
         expect(page).toContain("xl:grid-cols-4");
     });
 
+    it("keeps hover controls readable on both light and dark covers", async () => {
+        const card = await read("src/app/(user)/canvas/components/canvas-project-card.tsx");
+
+        // 半透明黑/白在深浅封面上总有一边糊掉；统一白底 + 细边 + 落影
+        expect(card).toContain("bg-white/95");
+        expect(card).not.toContain("bg-[rgba(17,17,19,0.45)]");
+        // 深色主题的全局 button 颜色会压掉 text-*，图标必须用内联色
+        expect(card).toContain("const controlInk = { color: \"#3f3f46\" } as const;");
+        expect(card).toContain("style={selected ? { color: \"#ffffff\" } : controlInk}");
+        // 选中态用品牌橙描边 + 橙色勾，和未选中的白框拉开差距
+        expect(card).toContain("outline-[var(--brand-500)]");
+        expect(card).toContain("bg-[var(--brand-500)]");
+    });
+
     it("enters a freshly created canvas without flashing a new tile first", async () => {
         const [page, store] = await Promise.all([read("src/app/(user)/canvas/page.tsx"), read("src/app/(user)/canvas/stores/use-canvas-store.ts")]);
 

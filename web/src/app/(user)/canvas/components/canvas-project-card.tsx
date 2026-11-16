@@ -13,9 +13,14 @@ import { exportCanvasProjects } from "../utils/canvas-export";
 import { CanvasProjectCover } from "./canvas-project-cover";
 import { canvasProjectMeta, formatCanvasUpdatedAt } from "./canvas-project-format";
 
-const actionBase =
-    "absolute top-2 grid place-items-center rounded-lg text-white backdrop-blur-sm transition-[opacity,background-color] duration-150 " +
-    "bg-[rgba(17,17,19,0.45)] hover:bg-[rgba(17,17,19,0.68)] dark:bg-[rgba(255,255,255,0.18)] dark:hover:bg-[rgba(255,255,255,0.3)]";
+/** 悬浮控件统一用「白底 + 细边 + 落影」：深色封面、浅色封面和亮图上都读得清。
+ *  之前的半透明黑/白在深浅两种封面上总有一种糊在一起，选中态也不明显。 */
+const actionSurface =
+    "bg-white/95 ring-1 ring-black/10 shadow-[0_2px_8px_rgba(17,17,19,0.28)] hover:bg-white dark:bg-white/92 dark:hover:bg-white";
+const actionBase = "absolute top-2 grid place-items-center transition-[opacity,background-color,box-shadow] duration-150";
+/** 深色主题有一条未分层的 `button` 颜色规则，会把 Tailwind 的 text-* 压成白色，
+ *  白底控件上的图标因此看不见；这里用内联色保证两种主题都读得清。 */
+const controlInk = { color: "#3f3f46" } as const;
 /** 默认隐形，指针悬停或键盘聚焦时才露出来，避免缩略图上长期压着小按钮 */
 const revealClass = "opacity-0 group-hover/card:opacity-100 focus-visible:opacity-100";
 
@@ -87,7 +92,7 @@ export function CanvasProjectCard({ project }: { project: CanvasProjectSummary }
                     // 菜单是 portal 出去渲染的，鼠标移进菜单就丢了 hover，这里补一次，防止卡片"掉回去"
                     menuOpen && "-translate-y-0.5 shadow-[0_12px_28px_-14px_rgba(17,17,19,0.3),0_2px_6px_-2px_rgba(17,17,19,0.08)] dark:shadow-[0_14px_30px_-14px_rgba(0,0,0,0.75),0_2px_6px_-2px_rgba(0,0,0,0.5)]",
                     // 用 outline 而不是 shadow 画选中框，免得和上面的落影互相覆盖
-                    selected && "outline outline-2 -outline-offset-1 outline-[var(--ink-1)]",
+                    selected && "outline outline-2 -outline-offset-1 outline-[var(--brand-500)]",
                 )}
             >
                 <button
@@ -113,13 +118,15 @@ export function CanvasProjectCard({ project }: { project: CanvasProjectSummary }
                     }}
                     className={cn(
                         actionBase,
-                        "left-2 size-5 rounded-md",
+                        "left-2 size-6 rounded-md",
                         selected
-                            ? "bg-[#18181b] opacity-100 hover:bg-[#18181b] dark:bg-white dark:text-[#121212] dark:hover:bg-white"
-                            : cn("ring-1 ring-inset ring-white/70", revealClass),
+                            ? "bg-[var(--brand-500)] shadow-[0_2px_8px_rgba(226,103,31,0.42)] ring-1 ring-white/70 hover:bg-[var(--brand-600)]"
+                            : cn(actionSurface, revealClass),
                     )}
+                    style={selected ? { color: "#ffffff" } : controlInk}
                 >
-                    <Check className={cn("size-3", selected ? "opacity-100" : "opacity-0")} strokeWidth={3.5} />
+                    {/* 方形空框＝未选中，橙色勾＝已选中；圆点太容易被当成装饰 */}
+                    <Check className={cn("size-3.5", selected ? "opacity-100" : "opacity-0")} strokeWidth={3.5} />
                 </button>
 
                 <Dropdown
@@ -136,7 +143,8 @@ export function CanvasProjectCard({ project }: { project: CanvasProjectSummary }
                         type="button"
                         aria-label={`${project.title} 的更多操作`}
                         onClick={(event) => event.stopPropagation()}
-                        className={cn(actionBase, "right-2 size-7", menuOpen ? "opacity-100" : revealClass)}
+                        className={cn(actionBase, "right-2 size-7 rounded-lg", actionSurface, menuOpen ? "opacity-100" : revealClass)}
+                        style={controlInk}
                     >
                         <MoreHorizontal className="size-4" />
                     </button>
