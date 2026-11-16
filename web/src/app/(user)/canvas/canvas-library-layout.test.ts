@@ -51,10 +51,11 @@ describe("canvas library layout", () => {
         expect(card).toContain("CanvasProjectCover");
         expect(card).toContain("project.previews ?? []");
         expect(card).toContain("aspect-[16/10]");
-        // 拼贴：2 张并排、3 张一大两小、4 张 2×2
-        expect(cover).toContain("tiles.length === 2 && \"grid-cols-2\"");
-        expect(cover).toContain("tiles.length === 3 && \"grid-cols-2 grid-rows-2\"");
-        expect(cover).toContain("row-span-2");
+        // 封面只放第一张素材、整块铺满，不再做拼图
+        expect(cover).toContain("const cover = previews[0]");
+        expect(cover).toContain("object-cover");
+        expect(cover).not.toContain("grid-cols-2");
+        expect(cover).not.toContain("MAX_TILES");
         // 没有素材时不摆假图
         expect(cover).toContain("CanvasCoverPlaceholder");
         // 素材挂了也要留一块渐变，不能塌成空白

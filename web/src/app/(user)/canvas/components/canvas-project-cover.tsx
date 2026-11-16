@@ -6,54 +6,31 @@ import { useState } from "react";
 import type { CanvasProjectPreview } from "@/lib/canvas-project-contract";
 import { cn } from "@/lib/utils";
 
-/** 封面最多拼 4 张，和后端 aggregation 的上限保持一致 */
-const MAX_TILES = 4;
-
 /**
- * 画布列表卡的封面：把画布里已生成的素材拼成一格缩略图。
- * 没有素材时不摆假图，用一张抽象节点网络表示"空白画布"，观感比灰块好，也不误导。
+ * 画布列表卡的封面：只展示画布里的第一张素材，整块铺满。
+ * 不做拼图——列表里多张缩略图拼在一起会把卡片读成一堆碎片，第一张足够代表这张画布。
+ * 没有素材时不摆假图，用一张点阵画板表示"空白画布"，观感比灰块好，也不误导。
  */
 export function CanvasProjectCover({ previews, className }: { previews: CanvasProjectPreview[]; className?: string }) {
-    const tiles = previews.slice(0, MAX_TILES);
-    if (!tiles.length) return <CanvasCoverPlaceholder className={className} />;
+    const cover = previews[0];
+    if (!cover) return <CanvasCoverPlaceholder className={className} />;
 
     return (
         <div className={cn("size-full bg-[var(--surface-inset)]", className)}>
-            {tiles.length === 1 ? (
-                <CoverTile preview={tiles[0]} allowVideo />
-            ) : (
-                <div
-                    className={cn(
-                        "grid size-full gap-px",
-                        tiles.length === 2 && "grid-cols-2",
-                        tiles.length === 3 && "grid-cols-2 grid-rows-2",
-                        tiles.length >= 4 && "grid-cols-2 grid-rows-2",
-                    )}
-                >
-                    {tiles.map((preview, index) => (
-                        <CoverTile
-                            key={`${preview.url}-${index}`}
-                            preview={preview}
-                            allowVideo={index === 0}
-                            className={cn(tiles.length === 3 && index === 0 && "row-span-2")}
-                        />
-                    ))}
-                </div>
-            )}
+            <CoverTile preview={cover} />
         </div>
     );
 }
 
-function CoverTile({ preview, allowVideo, className }: { preview: CanvasProjectPreview; allowVideo: boolean; className?: string }) {
+function CoverTile({ preview }: { preview: CanvasProjectPreview }) {
     const [failed, setFailed] = useState(false);
     const isVideo = preview.kind === "video";
-    // 一个列表页最多十几个视频，全渲染 <video> 太重；只有主位放真视频，其余用海报位
-    const renderVideo = isVideo && allowVideo && !failed;
+    const renderVideo = isVideo && !failed;
     const renderImage = !isVideo && !failed;
     const src = isVideo && !preview.url.includes("#") ? `${preview.url}#t=0.1` : preview.url;
 
     return (
-        <div className={cn("relative size-full overflow-hidden bg-[var(--surface-inset)]", className)}>
+        <div className="relative size-full overflow-hidden bg-[var(--surface-inset)]">
             {renderVideo ? (
                 <video src={src} muted playsInline preload="metadata" className="size-full object-cover" onError={() => setFailed(true)} />
             ) : renderImage ? (
