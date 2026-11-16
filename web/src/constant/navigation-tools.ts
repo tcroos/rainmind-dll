@@ -1,4 +1,4 @@
-import { BookMarked, Braces, Clapperboard, Compass, FileText, GalleryVerticalEnd, Images, Maximize2, Sparkles, UserCog, UserRound, Wallet } from "lucide-react";
+import { BookMarked, Braces, Clapperboard, Compass, FileText, GalleryVerticalEnd, Images, Maximize2, Sparkles, UserRound, Wallet } from "lucide-react";
 
 export const navigationGroups = [
     { id: "create", label: "创作" },
@@ -87,13 +87,6 @@ export const navigationTools = [
         description: "积分、套餐与账单",
         group: "personal",
         icon: Wallet,
-    },
-    {
-        slug: "profile",
-        label: "个人中心",
-        description: "资料、安全与帮助",
-        group: "personal",
-        icon: UserCog,
     },
     {
         slug: "api",

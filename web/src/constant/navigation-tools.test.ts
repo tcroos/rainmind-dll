@@ -22,7 +22,9 @@ describe("user navigation order", () => {
         // 广场是「别人的作品」，归资产；「社区」这个分组随之取消
         expect(navigationTools.find((tool) => tool.slug === "community")?.group).toBe("assets");
         expect(navigationGroups.map((group) => group.id)).not.toContain("community");
-        expect(navigationTools.filter((tool) => tool.group === "personal").map((tool) => tool.label)).toEqual(["主页", "钱包", "个人中心", "API"]);
+        // 个人中心不在侧栏列表里：它只有「底部账号条」和「右上角头像面板」两个入口
+        expect(navigationTools.filter((tool) => tool.group === "personal").map((tool) => tool.label)).toEqual(["主页", "钱包", "API"]);
+        expect(navigationTools.map((tool) => tool.slug)).not.toContain("profile");
     });
 
     it("links the API entry to the public gateway in a new window", () => {

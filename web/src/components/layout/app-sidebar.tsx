@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -51,7 +51,6 @@ export function AppSidebar({ activeToolSlug, expanded }: { activeToolSlug?: Navi
                                         <>
                                             <Icon className={cn("size-5 shrink-0", active && "text-[var(--ink-1)]")} />
                                             {expanded ? <span className="min-w-0 flex-1 truncate">{tool.label}</span> : null}
-                                            {expanded && external ? <ExternalLink className="size-3.5 shrink-0 text-[var(--ink-3)]" /> : null}
                                         </>
                                     );
                                     return external ? (

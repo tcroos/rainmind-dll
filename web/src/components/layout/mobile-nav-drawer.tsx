@@ -1,7 +1,7 @@
 "use client";
 
 import { Drawer } from "antd";
-import { ExternalLink, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -75,7 +75,7 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
                                     <>
                                         <Icon className="size-5 shrink-0" />
                                         <span className="min-w-0 flex-1 truncate">{tool.label}</span>
-                                        {external ? <ExternalLink className="size-3.5 shrink-0 opacity-60" /> : <span className={cn("size-1.5 rounded-full", active ? "bg-current" : "bg-transparent")} />}
+                                        <span className={cn("size-1.5 rounded-full", active ? "bg-current" : "bg-transparent")} />
                                     </>
                                 );
                                 return external ? (
