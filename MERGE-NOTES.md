@@ -3,7 +3,7 @@
 > 生成时间：2026-11-16
 > 仓库：`https://github.com/tcroos/rainmind-dll.git`（remote `origin`，分支 `main`）
 > 对比基线：`rainmind/main`（`https://github.com/tcroos/rainmind-frontend.git`）@ `6e23dee`（2026-11-13）
-> 本文覆盖范围：`5ff6b3c..4d61d26`（**34 个提交、132 个文件、+7526 / −2529**；新增 42、修改 90、删除 0）。本文档自身的提交不在统计内。
+> 本文覆盖范围：`6e23dee..4d61d26`（**34 个提交、132 个文件、+7526 / −2529**；新增 42、修改 90、删除 0）。本文档自身的提交不在统计内。
 
 这份文档是给「把这个仓库合并回目标项目」用的。**第 2 节（接口）和第 7 节（全局样式）是必须逐条核对的**，其余是页面与交互改动。
 
@@ -82,7 +82,7 @@ git diff --stat rainmind/main...HEAD
 - 文件：`web/src/app/api/auth/email-code/route.ts`
 - 依赖：`web/src/lib/mail/smtp.ts` 新增导出 `isMailServiceConfigured()`、`verifySmtpConnection()`
 - 鉴权：不变（`email-change` 需要登录，其余为公开接口）
-- 限流：不变（同一 `purpose` + IP + 邮箱，5 次 / 60 分钟）
+- 限流：调用与参数不变（`checkAuthRateLimit("email-code:<purpose>", …, 5 次 / 60 分钟)`）；实际按 IP、设备指纹、「邮箱 + 来源」三个维度分别计数，任一维度超限即返回 429（这是既有安全模块的行为，本次未改）。
 
 **请求体（未变）**
 
@@ -666,4 +666,4 @@ npx vitest run     # 合并前基线：2747 passed / 9 skipped / 0 failed
 
 - 本次无数据库迁移，回滚代码即可；新增的 `site.contactImageUrl` 字段留在 JSON 里不会影响旧代码（旧 normalizer 会忽略未知键）。
 - 若只回滚前端，注意新前端写入的 `sessionStorage` 公告标记不影响旧代码。
-- 回滚点：`rainmind/main`（`6e23dee`）为合并前基线；本次改动全部在 `5ff6b3c..4d61d26`。
+- 回滚点：`rainmind/main`（`6e23dee`）为合并前基线；本次改动全部在 `6e23dee..4d61d26`。
